@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { supabase, isSupabaseConfigured } from '../../config/supabase-config';
@@ -32,7 +32,7 @@ interface Consulta {
   dataAgendamento: string;
 }
 
-export default function AgendarConsulta() {
+function AgendarConsultaInner() {
   const searchParams = useSearchParams();
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [formData, setFormData] = useState({
@@ -266,5 +266,13 @@ export default function AgendarConsulta() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function AgendarConsulta() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-100 p-4">Carregando...</div>}>
+      <AgendarConsultaInner />
+    </Suspense>
   );
 }
