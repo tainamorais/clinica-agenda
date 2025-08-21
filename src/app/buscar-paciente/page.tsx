@@ -75,14 +75,17 @@ export default function BuscarPaciente() {
     carregarPacientes();
   }, []);
 
-  const filtrarPacientes = (termo: string) => {
-    if (!termo.trim()) {
-      return todosPacientes;
-    }
+  const normalizar = (texto: string) =>
+    (texto || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
 
-    const termoLower = termo.toLowerCase();
+  const filtrarPacientes = (termo: string) => {
+    if (!termo.trim()) return todosPacientes;
+    const t = normalizar(termo);
     return todosPacientes.filter(paciente =>
-      paciente.nome.toLowerCase().includes(termoLower) ||
+      normalizar(paciente.nome).includes(t) ||
       (paciente.telefone || '').includes(termo) ||
       (paciente.cpf || '').includes(termo)
     );

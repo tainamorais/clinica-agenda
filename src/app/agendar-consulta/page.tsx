@@ -35,6 +35,7 @@ interface Consulta {
 function AgendarConsultaInner() {
   const searchParams = useSearchParams();
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
+  const [termoBusca, setTermoBusca] = useState('');
   const [formData, setFormData] = useState({
     pacienteId: '',
     data: '',
@@ -53,6 +54,22 @@ function AgendarConsultaInner() {
     const bruto = (p as any).valor_consulta ?? (p as any).valorConsulta ?? 0;
     return Number(bruto) || 0;
   };
+
+  const normalizar = (texto: string) =>
+    (texto || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+
+  const pacientesFiltrados = pacientes.filter((p) => {
+    if (!termoBusca.trim()) return true;
+    const t = normalizar(termoBusca);
+    return (
+      normalizar(p.nome).includes(t) ||
+      (p.telefone || '').includes(termoBusca) ||
+      (p.cpf || '').includes(termoBusca)
+    );
+  });
 
   useEffect(() => {
     const carregar = async () => {
@@ -211,12 +228,21 @@ function AgendarConsultaInner() {
                 <Link href="/cadastrar-paciente" className="text-blue-600 hover:underline text-sm mt-2 inline-block">Cadastrar primeiro paciente</Link>
               </div>
             ) : (
-              <select name="pacienteId" value={formData.pacienteId} onChange={handlePacienteChange} required className={selectClass}>
-                <option value="">Escolha um paciente</option>
-                {pacientes.map(paciente => (
-                  <option key={paciente.id} value={paciente.id}>{paciente.nome} - {paciente.telefone}</option>
-                ))}
-              </select>
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  value={termoBusca}
+                  onChange={(e) => setTermoBusca(e.target.value)}
+                  placeholder="Digite nome, sobrenome, CPF ou telefone"
+                  className={inputClass}
+                />
+                <select name="pacienteId" value={formData.pacienteId} onChange={handlePacienteChange} required className={selectClass}>
+                  <option value="">Escolha um paciente</option>
+                  {pacientesFiltrados.map(paciente => (
+                    <option key={paciente.id} value={paciente.id}>{paciente.nome} - {paciente.telefone}</option>
+                  ))}
+                </select>
+              </div>
             )}
           </div>
 
