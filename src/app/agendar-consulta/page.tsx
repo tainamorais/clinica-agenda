@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { supabase, isSupabaseConfigured } from '../../config/supabase-config';
 
@@ -32,6 +33,7 @@ interface Consulta {
 }
 
 export default function AgendarConsulta() {
+  const searchParams = useSearchParams();
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [formData, setFormData] = useState({
     pacienteId: '',
@@ -58,6 +60,15 @@ export default function AgendarConsulta() {
         const { data, error } = await supabase.from('pacientes').select('*').order('nome', { ascending: true });
         if (!error && data && data.length > 0) {
           setPacientes(data as any);
+          // Pré-seleciona via querystring ?pacienteId=
+          const preId = searchParams.get('pacienteId');
+          if (preId) {
+            const p = (data as any).find((x: any) => String(x.id) === String(preId));
+            if (p) {
+              setFormData(prev => ({ ...prev, pacienteId: String(p.id) }));
+              setPacienteSelecionado(p as any);
+            }
+          }
         } else {
           const pacientesSalvos = localStorage.getItem('pacientes');
           if (pacientesSalvos) setPacientes(JSON.parse(pacientesSalvos));
@@ -68,7 +79,7 @@ export default function AgendarConsulta() {
       }
     };
     carregar();
-  }, []);
+  }, [searchParams]);
 
   const salvarConsulta = async (consulta: Omit<Consulta, 'id' | 'dataAgendamento' | 'paciente'>) => {
     if (isSupabaseConfigured) {

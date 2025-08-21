@@ -228,7 +228,7 @@ export default function BuscarPaciente() {
                     Ver Ficha Completa
                   </Link>
                   <Link
-                    href="/agendar-consulta"
+                    href={`/agendar-consulta?pacienteId=${paciente.id}`}
                     className="flex-1 px-3 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors text-center"
                   >
                     Agendar Consulta
