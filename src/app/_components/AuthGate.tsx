@@ -56,9 +56,9 @@ export function AuthGate({ children }: Props) {
       const isMedico = userRole === 'medico';
       const isContador = userRole === 'contador';
 
-      // Rotas administrativas
+      // Rotas administrativas → redireciona para home com alerta
       if (path.startsWith('/admin') && !isAdmin) {
-        setDenied('Acesso restrito a administradores.');
+        router.replace('/?forbidden=admin');
         setChecking(false);
         return;
       }
@@ -72,7 +72,7 @@ export function AuthGate({ children }: Props) {
         '/editar-paciente',
       ];
       if (isContador && contadorBloqueadas.some((p) => path.startsWith(p))) {
-        setDenied('Seu perfil (contador) possui acesso somente de leitura.');
+        router.replace('/?forbidden=contador');
         setChecking(false);
         return;
       }
@@ -84,7 +84,7 @@ export function AuthGate({ children }: Props) {
         '/editar-consulta',
       ];
       if (isMedico && medicoBloqueadas.some((p) => path.startsWith(p))) {
-        setDenied('Seu perfil (médico) não pode acessar esta página.');
+        router.replace('/?forbidden=medico');
         setChecking(false);
         return;
       }

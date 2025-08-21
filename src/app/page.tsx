@@ -1,8 +1,10 @@
 import Link from 'next/link';
+import RoleAlert from './_components/RoleAlert';
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-gray-100 p-4">
+      <RoleAlert />
       <div className="max-w-md mx-auto">
         {/* Cabeçalho */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
