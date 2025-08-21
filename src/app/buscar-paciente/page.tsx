@@ -1,4 +1,6 @@
-'use client';
+"use client";
+
+import { formatISOToBR, calculateAgeFromISO } from '../../lib/date';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -43,6 +45,32 @@ export default function BuscarPaciente() {
   const hasRepresentante = (p: Paciente) => Boolean((p as any).tem_representante ?? p.temRepresentante);
   const getNomeRepresentante = (p: Paciente) => p.nomeRepresentante || (p as any).nome_representante || '';
   const getTelefoneRepresentante = (p: Paciente) => p.telefoneRepresentante || (p as any).telefone_representante || '';
+
+  // Monta link do WhatsApp a partir do telefone
+  const buildWhatsUrl = (phone: string, name?: string) => {
+    const digits = (phone || '').replace(/\D/g, '');
+    if (!digits) return '#';
+    const withCountry = digits.startsWith('55') ? digits : `55${digits}`;
+    const firstName = (name || '').trim().split(' ')[0] || '';
+    const text = encodeURIComponent(firstName ? `Olá ${firstName}!` : 'Olá!');
+    return `https://wa.me/${withCountry}?text=${text}`;
+  };
+
+  const WhatsIcon = () => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      width="16"
+      height="16"
+      aria-hidden="true"
+      className="text-white"
+    >
+      <path
+        fill="currentColor"
+        d="M17.472 14.382c-.297-.149-1.758-.867-2.031-.967-.273-.099-.472-.149-.672.15-.198.297-.768.966-.941 1.164-.173.199-.347.224-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.607.134-.133.298-.347.446-.52.149-.173.198-.298.298-.497.099-.198.05-.372-.025-.521-.075-.149-.672-1.614-.92-2.207-.242-.58-.487-.502-.672-.511l-.571-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.71.306 1.265.489 1.697.626.713.227 1.362.195 1.877.118.572-.085 1.758-.718 2.006-1.412.248-.694.248-1.289.173-1.412-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.999-3.648-.237-.374A9.86 9.86 0 012.29 12.02c0-5.45 4.436-9.885 9.887-9.885 2.64 0 5.122 1.03 6.988 2.897a9.825 9.825 0 012.894 6.994c-.003 5.45-4.438 9.885-9.888 9.885M20.13 3.893A11.815 11.815 0 0012.178.003C5.574.003.29 5.288.292 11.89c0 2.096.547 4.142 1.588 5.94L.057 24l6.334-1.665a11.87 11.87 0 005.79 1.475h.005c6.601 0 11.89-5.287 11.893-11.89a11.82 11.82 0 00-3.949-8.027"
+      />
+    </svg>
+  );
 
   // Carregar pacientes do Supabase (ou localStorage como fallback)
   useEffect(() => {
@@ -101,22 +129,12 @@ export default function BuscarPaciente() {
     setPacienteSelecionado(paciente);
   };
 
-  const formatarData = (data: string) => {
-    if (!data) return '';
-    return new Date(data).toLocaleDateString('pt-BR');
-  };
+  // Evita bug de fuso (YYYY-MM-DD interpretado como UTC) formatando manualmente
+  const formatarData = (data: string) => formatISOToBR(data);
 
   const calcularIdade = (p: Paciente) => {
-    const dataNascimento = getDataNascimento(p);
-    if (!dataNascimento) return '';
-    const hoje = new Date();
-    const nascimento = new Date(dataNascimento);
-    let idade = hoje.getFullYear() - nascimento.getFullYear();
-    const mes = hoje.getMonth() - nascimento.getMonth();
-    if (mes < 0 || (mes === 0 && hoje.getDate() < nascimento.getDate())) {
-      idade--;
-    }
-    return `${idade} anos`;
+    const age = calculateAgeFromISO(getDataNascimento(p));
+    return age == null ? '' : `${age} anos`;
   };
 
   const formatarDataCadastro = (p: Paciente) => formatarData(getDataCadastro(p));
@@ -198,7 +216,22 @@ export default function BuscarPaciente() {
                     <h3 className="font-semibold text-gray-800 text-lg">
                       {paciente.nome}
                     </h3>
-                    <p className="text-sm text-gray-600">{paciente.telefone}</p>
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <span>{paciente.telefone}</span>
+                      {paciente.telefone && (
+                        <a
+                          href={buildWhatsUrl(paciente.telefone, paciente.nome)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label="Enviar WhatsApp"
+                          className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-green-500 hover:bg-green-600"
+                          onClick={(e) => e.stopPropagation()}
+                          title="WhatsApp"
+                        >
+                          <WhatsIcon />
+                        </a>
+                      )}
+                    </div>
                   </div>
                   <div className="text-right">
                     <span className="text-sm font-medium text-blue-600">
@@ -216,9 +249,24 @@ export default function BuscarPaciente() {
                   
                   {hasRepresentante(paciente) && (
                     <div className="mt-2 p-2 bg-yellow-50 rounded border-l-4 border-yellow-400">
-                      <p className="text-xs text-yellow-800">
-                        <strong>Representante:</strong> {getNomeRepresentante(paciente)} - {getTelefoneRepresentante(paciente)}
-                      </p>
+                      <div className="flex items-center justify-between gap-2 text-xs text-yellow-800">
+                        <p>
+                          <strong>Representante:</strong> {getNomeRepresentante(paciente)} - {getTelefoneRepresentante(paciente)}
+                        </p>
+                        {getTelefoneRepresentante(paciente) && (
+                          <a
+                            href={buildWhatsUrl(getTelefoneRepresentante(paciente), getNomeRepresentante(paciente))}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="WhatsApp do representante"
+                            className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-green-500 hover:bg-green-600"
+                            onClick={(e) => e.stopPropagation()}
+                            title="WhatsApp"
+                          >
+                            <WhatsIcon />
+                          </a>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

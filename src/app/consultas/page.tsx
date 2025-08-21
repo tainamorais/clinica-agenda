@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase, isSupabaseConfigured } from '../../config/supabase-config';
+import { formatISOToBR } from '../../lib/date';
 
 interface Paciente {
   id: number;
@@ -131,7 +132,7 @@ export default function ConsultasPorData() {
   };
 
   const consultasOrdenadas = [...consultas].sort((a, b) => a.horario.localeCompare(b.horario));
-  const formatarDataBR = (iso: string) => new Date(iso).toLocaleDateString('pt-BR');
+  const formatarDataBR = (iso: string) => formatISOToBR(iso);
 
   return (
     <div className="min-h-screen bg-gray-100 p-4">

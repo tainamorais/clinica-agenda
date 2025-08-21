@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase, isSupabaseConfigured } from '../../config/supabase-config';
+import { formatISOToBR, calculateAgeFromISO } from '../../lib/date';
 
 interface Paciente {
   id: number;
@@ -158,18 +159,13 @@ export default function Historico() {
 
   const calcularTotalDevido = (consultas: Consulta[]) => consultas.filter(c => !c.jaPagou).reduce((total, c) => total + getValorConsulta(c.paciente), 0);
 
-  const formatarData = (data: string) => new Date(data).toLocaleDateString('pt-BR');
+  const formatarData = (data: string) => formatISOToBR(data);
   const formatarDataCompleta = (data: string, horario: string) => `${formatarData(data)} às ${horario}`;
 
   const calcularIdade = (p: Paciente) => {
     const dn = getDataNasc(p);
-    if (!dn) return '';
-    const hoje = new Date();
-    const nascimento = new Date(dn);
-    let idade = hoje.getFullYear() - nascimento.getFullYear();
-    const mes = hoje.getMonth() - nascimento.getMonth();
-    if (mes < 0 || (mes === 0 && hoje.getDate() < nascimento.getDate())) idade--;
-    return `${idade} anos`;
+    const idade = calculateAgeFromISO(dn);
+    return idade == null ? '' : `${idade} anos`;
   };
 
   const pacientesComConsultas = pacientesComHistorico.filter(p => p.consultas.length > 0);
