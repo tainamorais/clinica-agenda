@@ -26,7 +26,7 @@ npm install
 ```
 **Aguarde terminar (pode demorar alguns minutos)**
 
-### 3. Configurar banco de dados (Supabase)
+### 3. Configurar banco de dados (Supabase) + Login com Google
 **Siga exatamente estes passos:**
 
 1. **Acesse:** https://supabase.com
@@ -98,7 +98,15 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=sua-chave-anonima-aqui
 
 **Clique em:** "Save"
 
-### 7. Rodar o projeto
+### 7. Ativar Login Google e permissões
+1. No Supabase → Authentication → Providers → Google → habilite Google.
+2. Redirect URLs:
+   - Local: `http://localhost:3000/auth/callback`
+   - Produção (Vercel): `https://SEU-DOMINIO.vercel.app/auth/callback`
+3. Crie a tabela `allowed_emails` e políticas iniciais conforme `SUPABASE-SETUP.md`.
+4. Insira seu e‑mail como `admin` em `allowed_emails`.
+
+### 8. Rodar o projeto
 ```bash
 npm run dev
 ```
@@ -109,13 +117,15 @@ npm run dev
 - Local:        http://localhost:3000
 ```
 
-### 8. Acessar no navegador
+### 9. Acessar no navegador
 **Abra seu navegador e acesse:**
 ```
 http://localhost:3000
 ```
 
 ## ✅ Pronto! Sistema funcionando!
+
+Primeiro acesso: vá para `/login` e entre com a conta Google. Somente e‑mails cadastrados em `allowed_emails` entram. Usuários admin podem gerenciar permissões em `/admin/usuarios`.
 
 ## 🔧 Se der erro - Soluções:
 

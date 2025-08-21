@@ -22,7 +22,11 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
 
 // Cliente oficial do Supabase
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: { persistSession: false },
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
 });
 
 // Flag para sabermos se as credenciais estão presentes
@@ -58,4 +62,12 @@ export interface Consulta {
 
 export interface ConsultaComPaciente extends Consulta {
   paciente: Paciente;
+}
+
+export type UserRole = 'admin' | 'gestor' | 'medico' | 'contador';
+
+export interface AllowedEmail {
+  email: string;
+  role: UserRole;
+  created_at?: string;
 }
