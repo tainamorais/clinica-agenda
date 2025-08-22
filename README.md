@@ -177,29 +177,6 @@ npm run dev
 5. Configure as variáveis de ambiente (mesmas do `.env.local`)
 6. Clique em "Deploy"
 
-## 🔐 Produção segura (resumo)
-- Use Node 20 na Vercel (Project → Settings → Node.js Version).
-- Variáveis: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
-
-## 💾 Backups econômicos (por arquivos no Storage)
-Este projeto inclui uma rota segura que exporta `pacientes`, `consultas` e `allowed_emails` para um bucket privado `backups`.
-
-1. Defina as envs no deploy:
-   - `SUPABASE_SERVICE_ROLE_KEY` (Service Role do Supabase)
-   - `BACKUP_CRON_SECRET` (um token aleatório)
-2. Crie um Cron Job na Vercel (Project → Settings → Cron Jobs):
-   - Path: `/api/backup`
-   - Schedule: `0 3 * * *` (diário às 03:00)
-   - Header: `x-cron-secret: <BACKUP_CRON_SECRET>`
-3. Para testar manualmente: faça `GET /api/backup` enviando o mesmo header.
-
-### Restaurar
-1. Baixe a pasta do dia em Supabase → Storage → `backups`.
-2. Importe os JSONs para as tabelas pelo Table Editor (ou script).
-
-## 📤 Exportar dados manualmente
-`GET /api/export` retorna JSON com os dados atuais das tabelas principais.
-
 ## 📞 Precisa de ajuda?
 
 **Problemas mais comuns:**

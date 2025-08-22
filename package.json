@@ -10,9 +10,6 @@
     "test": "vitest run",
     "test:watch": "vitest"
   },
-  "engines": {
-    "node": ">=20 <21"
-  },
   "dependencies": {
     "@supabase/supabase-js": "^2.55.0",
     "next": "15.5.0",
