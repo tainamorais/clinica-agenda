@@ -360,12 +360,12 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
                               {editingId === c.id ? (
                                 <div className="mt-3 space-y-2 bg-white border border-gray-200 p-3 rounded">
                                   <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Remédios em uso (um por linha)</label>
-                                    <textarea value={editMedicacoes} onChange={(e) => setEditMedicacoes(e.target.value)} rows={3} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex.: Losartana 50mg 1x/dia\nMetformina 850mg 2x/dia" />
+                                    <label className="block text-sm font-medium text-gray-800 mb-1">Remédios em uso (um por linha)</label>
+                                    <textarea value={editMedicacoes} onChange={(e) => setEditMedicacoes(e.target.value)} rows={3} className="w-full px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white text-gray-900 placeholder-gray-500 text-base" placeholder="Ex.: Losartana 50mg 1x/dia\nMetformina 850mg 2x/dia" />
                                   </div>
                                   <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Resumo do atendimento</label>
-                                    <textarea value={editResumo} onChange={(e) => setEditResumo(e.target.value)} rows={4} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Anamnese, conduta, orientações..." />
+                                    <label className="block text-sm font-medium text-gray-800 mb-1">Resumo do atendimento</label>
+                                    <textarea value={editResumo} onChange={(e) => setEditResumo(e.target.value)} rows={4} className="w-full px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white text-gray-900 placeholder-gray-500 text-base" placeholder="Anamnese, conduta, orientações..." />
                                   </div>
                                   <div className="grid grid-cols-2 gap-2">
                                     <button disabled={savingInline} onClick={() => salvarEdicao(c.id)} className="px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400">Salvar</button>
