@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { supabase, isSupabaseConfigured } from '../../config/supabase-config';
+import { supabase, isSupabaseConfigured, isLocalCacheEnabled } from '../../config/supabase-config';
 import { formatISOToBR } from '../../lib/date';
 
 interface Paciente {
@@ -79,7 +79,7 @@ export default function ConsultasHoje() {
           return;
         }
       }
-      const consultasSalvas = localStorage.getItem('consultas');
+      const consultasSalvas = isLocalCacheEnabled ? localStorage.getItem('consultas') : null;
       if (consultasSalvas) {
         const todasConsultas: Consulta[] = JSON.parse(consultasSalvas);
         const consultasHoje = todasConsultas.filter(consulta => consulta.data === dataHoje);
@@ -101,11 +101,11 @@ export default function ConsultasHoje() {
         await carregarConsultas();
         return;
       }
-      const consultasSalvas = JSON.parse(localStorage.getItem('consultas') || '[]');
+      const consultasSalvas = isLocalCacheEnabled ? JSON.parse(localStorage.getItem('consultas') || '[]') : [];
       const consultasAtualizadas = consultasSalvas.map((consulta: Consulta) =>
         consulta.id === consultaId ? { ...consulta, jaPagou: true } : consulta
       );
-      localStorage.setItem('consultas', JSON.stringify(consultasAtualizadas));
+      if (isLocalCacheEnabled) localStorage.setItem('consultas', JSON.stringify(consultasAtualizadas));
       await carregarConsultas();
     } catch (error) {
       console.error('Erro ao marcar como paga:', error);
@@ -124,9 +124,9 @@ export default function ConsultasHoje() {
           await carregarConsultas();
           return;
         }
-        const consultasSalvas = JSON.parse(localStorage.getItem('consultas') || '[]');
+        const consultasSalvas = isLocalCacheEnabled ? JSON.parse(localStorage.getItem('consultas') || '[]') : [];
         const consultasAtualizadas = consultasSalvas.filter((consulta: Consulta) => consulta.id !== consultaId);
-        localStorage.setItem('consultas', JSON.stringify(consultasAtualizadas));
+        if (isLocalCacheEnabled) localStorage.setItem('consultas', JSON.stringify(consultasAtualizadas));
         await carregarConsultas();
       } catch (error) {
         console.error('Erro ao cancelar consulta:', error);

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { supabase, isSupabaseConfigured } from '../../config/supabase-config';
+import { supabase, isSupabaseConfigured, isLocalCacheEnabled } from '../../config/supabase-config';
 import { formatISOToBR, calculateAgeFromISO } from '../../lib/date';
 
 interface Paciente {
@@ -96,8 +96,8 @@ export default function Historico() {
           return;
         }
       }
-      const pacientesSalvos = localStorage.getItem('pacientes');
-      const consultasSalvas = localStorage.getItem('consultas');
+      const pacientesSalvos = isLocalCacheEnabled ? localStorage.getItem('pacientes') : null;
+      const consultasSalvas = isLocalCacheEnabled ? localStorage.getItem('consultas') : null;
       if (pacientesSalvos && consultasSalvas) {
         const pacientes: Paciente[] = JSON.parse(pacientesSalvos);
         const consultas: Consulta[] = JSON.parse(consultasSalvas);
@@ -125,11 +125,11 @@ export default function Historico() {
         await carregarDados();
         return;
       }
-      const consultasSalvas = JSON.parse(localStorage.getItem('consultas') || '[]');
+      const consultasSalvas = isLocalCacheEnabled ? JSON.parse(localStorage.getItem('consultas') || '[]') : [];
       const consultasAtualizadas = consultasSalvas.map((consulta: Consulta) =>
         consulta.id === consultaId ? { ...consulta, jaPagou: true } : consulta
       );
-      localStorage.setItem('consultas', JSON.stringify(consultasAtualizadas));
+      if (isLocalCacheEnabled) localStorage.setItem('consultas', JSON.stringify(consultasAtualizadas));
       await carregarDados();
     } catch (error) {
       console.error('Erro ao marcar como paga:', error);
@@ -148,9 +148,9 @@ export default function Historico() {
         await carregarDados();
         return;
       }
-      const consultasSalvas = JSON.parse(localStorage.getItem('consultas') || '[]');
+      const consultasSalvas = isLocalCacheEnabled ? JSON.parse(localStorage.getItem('consultas') || '[]') : [];
       const atualizadas = consultasSalvas.filter((c: Consulta) => c.id !== consultaId);
-      localStorage.setItem('consultas', JSON.stringify(atualizadas));
+      if (isLocalCacheEnabled) localStorage.setItem('consultas', JSON.stringify(atualizadas));
       await carregarDados();
     } catch (error) {
       console.error('Erro ao cancelar consulta:', error);

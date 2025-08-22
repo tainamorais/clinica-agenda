@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { supabase, isSupabaseConfigured } from '../../../config/supabase-config';
+import { supabase, isSupabaseConfigured, isLocalCacheEnabled } from '../../../config/supabase-config';
 
 export default function EditarPaciente({ params }: { params: { id: string } }) {
   const pacienteId = Number(params.id);
@@ -50,7 +50,7 @@ export default function EditarPaciente({ params }: { params: { id: string } }) {
           return;
         }
       }
-      const pacientesLocal = JSON.parse(localStorage.getItem('pacientes') || '[]');
+      const pacientesLocal = isLocalCacheEnabled ? JSON.parse(localStorage.getItem('pacientes') || '[]') : [];
       const p = pacientesLocal.find((x: any) => x.id === pacienteId);
       if (p) {
         setFormData({
@@ -125,7 +125,7 @@ export default function EditarPaciente({ params }: { params: { id: string } }) {
           .update(pacienteData)
           .eq('id', pacienteId);
         if (updErr) throw updErr;
-      } else {
+      } else if (isLocalCacheEnabled) {
         const pacientesLocal = JSON.parse(localStorage.getItem('pacientes') || '[]');
         const existeOutro = pacientesLocal.some((p: any) => (p.cpf || '').trim() === pacienteData.cpf && p.id !== pacienteId);
         if (existeOutro) {
@@ -139,9 +139,11 @@ export default function EditarPaciente({ params }: { params: { id: string } }) {
 
       // Espelha local
       try {
-        const pacientesLocal = JSON.parse(localStorage.getItem('pacientes') || '[]');
-        const atualizados = pacientesLocal.map((p: any) => (p.id === pacienteId ? { ...p, ...pacienteData } : p));
-        localStorage.setItem('pacientes', JSON.stringify(atualizados));
+        if (isLocalCacheEnabled) {
+          const pacientesLocal = JSON.parse(localStorage.getItem('pacientes') || '[]');
+          const atualizados = pacientesLocal.map((p: any) => (p.id === pacienteId ? { ...p, ...pacienteData } : p));
+          localStorage.setItem('pacientes', JSON.stringify(atualizados));
+        }
       } catch (_) {}
 
       mostrarMensagem('Paciente atualizado com sucesso!', 'sucesso');

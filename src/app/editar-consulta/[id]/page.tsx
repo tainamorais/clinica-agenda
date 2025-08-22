@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { supabase, isSupabaseConfigured } from '../../../config/supabase-config';
+import { supabase, isSupabaseConfigured, isLocalCacheEnabled } from '../../../config/supabase-config';
 
 interface Paciente { id: number; nome: string; telefone: string; }
 
@@ -19,6 +19,8 @@ export default function EditarConsulta({ params }: { params: { id: string } }) {
     tipoConsulta: 'primeira',
     jaPagou: false,
     observacoes: '',
+    medicacoes: '',
+    resumo: ''
   });
 
   useEffect(() => {
@@ -43,13 +45,15 @@ export default function EditarConsulta({ params }: { params: { id: string } }) {
             tipoConsulta: cons.tipo_consulta,
             jaPagou: Boolean(cons.ja_pagou),
             observacoes: cons.observacoes || '',
+            medicacoes: (cons as any).medicacoes || '',
+            resumo: (cons as any).resumo || ''
           });
         }
         setCarregando(false);
         return;
       }
       // local
-      const pacsLocal = JSON.parse(localStorage.getItem('pacientes') || '[]');
+      const pacsLocal = isLocalCacheEnabled ? JSON.parse(localStorage.getItem('pacientes') || '[]') : [];
       setPacientes(pacsLocal);
       const consLocal = JSON.parse(localStorage.getItem('consultas') || '[]').find((c: any) => c.id === consultaId);
       if (consLocal) {
@@ -60,6 +64,8 @@ export default function EditarConsulta({ params }: { params: { id: string } }) {
           tipoConsulta: consLocal.tipoConsulta,
           jaPagou: Boolean(consLocal.jaPagou),
           observacoes: consLocal.observacoes || '',
+          medicacoes: consLocal.medicacoes || '',
+          resumo: consLocal.resumo || '',
         });
       }
     } catch (e) {
@@ -96,11 +102,13 @@ export default function EditarConsulta({ params }: { params: { id: string } }) {
             tipo_consulta: formData.tipoConsulta,
             ja_pagou: formData.jaPagou,
             observacoes: formData.observacoes,
+            medicacoes: (formData as any).medicacoes || null,
+            resumo: (formData as any).resumo || null,
           })
           .eq('id', consultaId);
         if (error) throw error;
       } else {
-        const consLocal: any[] = JSON.parse(localStorage.getItem('consultas') || '[]');
+        const consLocal: any[] = isLocalCacheEnabled ? JSON.parse(localStorage.getItem('consultas') || '[]') : [];
         const conflito = consLocal.some((c) => c.data === formData.data && c.horario === formData.horario && c.id !== consultaId);
         if (conflito) throw new Error('Horário já ocupado para esta data.');
         const atualizadas = consLocal.map((c) => (c.id === consultaId ? {
@@ -111,8 +119,10 @@ export default function EditarConsulta({ params }: { params: { id: string } }) {
           tipoConsulta: formData.tipoConsulta,
           jaPagou: formData.jaPagou,
           observacoes: formData.observacoes,
+          medicacoes: formData.medicacoes,
+          resumo: formData.resumo,
         } : c));
-        localStorage.setItem('consultas', JSON.stringify(atualizadas));
+        if (isLocalCacheEnabled) localStorage.setItem('consultas', JSON.stringify(atualizadas));
       }
       setMensagem('Consulta atualizada com sucesso!');
       setTipoMensagem('sucesso');
@@ -178,6 +188,14 @@ export default function EditarConsulta({ params }: { params: { id: string } }) {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Observações</label>
               <input name="observacoes" value={formData.observacoes} onChange={(e) => setFormData(prev => ({ ...prev, observacoes: e.target.value }))} className={inputClass} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Remédios em uso (um por linha)</label>
+              <textarea name="medicacoes" value={(formData as any).medicacoes} onChange={(e) => setFormData(prev => ({ ...prev, medicacoes: (e.target as HTMLTextAreaElement).value }))} rows={3} className={inputClass} placeholder="Ex.: Losartana 50mg 1x/dia\nMetformina 850mg 2x/dia" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Resumo do atendimento</label>
+              <textarea name="resumo" value={(formData as any).resumo} onChange={(e) => setFormData(prev => ({ ...prev, resumo: (e.target as HTMLTextAreaElement).value }))} rows={4} className={inputClass} placeholder="Anamnese, conduta, orientações..." />
             </div>
             <div className="flex space-x-3 pt-2">
               <Link href="/consultas" className="flex-1 px-4 py-2 text-center text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors">Cancelar</Link>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { supabase, isSupabaseConfigured } from '../../../config/supabase-config';
+import { supabase, isSupabaseConfigured, isLocalCacheEnabled, UserRole } from '../../../config/supabase-config';
 import { formatISOToBR } from '../../../lib/date';
 
 interface Paciente {
@@ -27,6 +27,8 @@ interface Consulta {
   jaPagou: boolean;
   observacoes: string;
   dataAgendamento: string;
+  medicacoes?: string;
+  resumo?: string;
 }
 
 const getValorConsulta = (p: Paciente) => {
@@ -43,10 +45,28 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
   const [carregando, setCarregando] = useState(true);
   const [mensagem, setMensagem] = useState('');
   const [tipoMensagem, setTipoMensagem] = useState<'sucesso' | 'erro'>('sucesso');
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [tab, setTab] = useState<'dados' | 'remedios' | 'ficha'>('dados');
 
   useEffect(() => {
     carregar();
   }, [params.id]);
+
+  // Carrega papel do usuário para controlar abas
+  useEffect(() => {
+    const run = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const email = session?.user?.email ?? null;
+        if (!email) return;
+        const { data } = await supabase.from('allowed_emails').select('role').eq('email', email).maybeSingle();
+        const r = (data?.role as UserRole) || null;
+        setUserRole(r);
+        if (r === 'contador') setTab('dados');
+      } catch (_) {}
+    };
+    run();
+  }, []);
 
   const carregar = async () => {
     setCarregando(true);
@@ -100,6 +120,8 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
             jaPagou: row.ja_pagou,
             observacoes: row.observacoes || '',
             dataAgendamento: row.data_agendamento,
+            medicacoes: row.medicacoes || '',
+            resumo: row.resumo || '',
           }));
           setConsultas(mapeadas);
           setCarregando(false);
@@ -108,10 +130,10 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
       }
 
       // Fallback local
-      const pacientesSalvos = JSON.parse(localStorage.getItem('pacientes') || '[]');
+      const pacientesSalvos = isLocalCacheEnabled ? JSON.parse(localStorage.getItem('pacientes') || '[]') : [];
       const pacienteLocal = pacientesSalvos.find((p: Paciente) => p.id === pacienteIdNum) || null;
       setPaciente(pacienteLocal);
-      const consultasSalvas: Consulta[] = JSON.parse(localStorage.getItem('consultas') || '[]');
+      const consultasSalvas: Consulta[] = isLocalCacheEnabled ? JSON.parse(localStorage.getItem('consultas') || '[]') : [];
       setConsultas(consultasSalvas.filter(c => c.pacienteId === pacienteIdNum));
     } catch (e) {
       console.error(e);
@@ -137,7 +159,7 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
         return;
       }
       // Local
-      const consultasSalvas: Consulta[] = JSON.parse(localStorage.getItem('consultas') || '[]');
+      const consultasSalvas: Consulta[] = isLocalCacheEnabled ? JSON.parse(localStorage.getItem('consultas') || '[]') : [];
       const atualizadas = consultasSalvas.map(c => (c.id === consultaId ? { ...c, jaPagou: true } : c));
       localStorage.setItem('consultas', JSON.stringify(atualizadas));
       await carregar();
@@ -176,6 +198,7 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
           <div className="bg-white rounded-lg shadow-md p-6 text-center">Paciente não encontrado.</div>
         ) : (
           <div className="space-y-4">
+            {/* Bloco fixo de dados principais */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-lg font-semibold text-gray-800 mb-2">{paciente.nome}</h2>
               <p className="text-sm text-gray-600">Telefone: {paciente.telefone}</p>
@@ -183,59 +206,123 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
               <p className="text-sm text-gray-600">Endereço: {paciente.endereco}</p>
               <p className="text-sm text-gray-600">Nascimento: {formatarData(getDataNasc(paciente))}</p>
               <p className="text-sm text-gray-600">Valor da Consulta: R$ {getValorConsulta(paciente).toFixed(2)}</p>
-            </div>
-
-            <div className="flex space-x-2">
-              <Link href={`/editar-paciente/${paciente.id}`} className="flex-1 px-3 py-2 bg-yellow-500 text-white text-sm rounded-md hover:bg-yellow-600 transition-colors text-center">Editar Paciente</Link>
-              <button
-                onClick={async () => {
-                  if (!confirm('Tem certeza que deseja apagar este paciente e suas consultas?')) return;
-                  try {
-                    if (isSupabaseConfigured) {
-                      const { error } = await supabase.from('pacientes').delete().eq('id', paciente.id);
-                      if (error) throw error;
-                    }
-                    // local
+              <div className="mt-4 flex space-x-2">
+                <Link href={`/editar-paciente/${paciente.id}`} className="flex-1 px-3 py-2 bg-yellow-500 text-white text-sm rounded-md hover:bg-yellow-600 transition-colors text-center">Editar Paciente</Link>
+                <button
+                  onClick={async () => {
+                    if (!confirm('Tem certeza que deseja apagar este paciente e suas consultas?')) return;
                     try {
-                      const pacientesLocal = JSON.parse(localStorage.getItem('pacientes') || '[]');
-                      const consultasLocal = JSON.parse(localStorage.getItem('consultas') || '[]');
-                      localStorage.setItem('pacientes', JSON.stringify(pacientesLocal.filter((p: any) => p.id !== paciente.id)));
-                      localStorage.setItem('consultas', JSON.stringify(consultasLocal.filter((c: any) => c.pacienteId !== paciente.id)));
-                    } catch (_) {}
-                    window.location.href = '/buscar-paciente';
-                  } catch (e) {
-                    console.error(e);
-                    setMensagem('Erro ao apagar paciente.');
-                    setTipoMensagem('erro');
-                  }
-                }}
-                className="flex-1 px-3 py-2 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 transition-colors"
-              >Apagar Paciente</button>
+                      if (isSupabaseConfigured) {
+                        const { error } = await supabase.from('pacientes').delete().eq('id', paciente.id);
+                        if (error) throw error;
+                      }
+                      try {
+                        if (isLocalCacheEnabled) {
+                          const pacientesLocal = JSON.parse(localStorage.getItem('pacientes') || '[]');
+                          const consultasLocal = JSON.parse(localStorage.getItem('consultas') || '[]');
+                          localStorage.setItem('pacientes', JSON.stringify(pacientesLocal.filter((p: any) => p.id !== paciente.id)));
+                          localStorage.setItem('consultas', JSON.stringify(consultasLocal.filter((c: any) => c.pacienteId !== paciente.id)));
+                        }
+                      } catch (_) {}
+                      window.location.href = '/buscar-paciente';
+                    } catch (e) {
+                      console.error(e);
+                      setMensagem('Erro ao apagar paciente.');
+                      setTipoMensagem('erro');
+                    }
+                  }}
+                  className="flex-1 px-3 py-2 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 transition-colors"
+                >Apagar Paciente</button>
+              </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="font-semibold text-gray-800 mb-3">Consultas</h3>
-              {consultas.length === 0 ? (
-                <p className="text-gray-500">Nenhuma consulta registrada.</p>
-              ) : (
-                <div className="space-y-3">
-                  {consultas.map((c) => (
-                    <div key={c.id} className="bg-gray-50 p-3 rounded-lg">
-                      <div className="flex justify-between items-start mb-1">
-                        <div>
-                          <p className="font-medium text-gray-800">{formatarData(c.data)} às {c.horario}</p>
-                          <p className="text-sm text-gray-600">{c.tipoConsulta === 'primeira' ? 'Primeira Vez' : 'Retorno'} - R$ {getValorConsulta(c.paciente).toFixed(2)}</p>
-                        </div>
-                        <div className={`text-sm font-medium ${c.jaPagou ? 'text-green-600' : 'text-red-600'}`}>{c.jaPagou ? '✅ Pago' : '❌ Pendente'}</div>
-                      </div>
-                      {c.observacoes && <p className="text-sm text-gray-600"><strong>Obs:</strong> {c.observacoes}</p>}
-                      {!c.jaPagou && (
-                        <button onClick={() => marcarComoPaga(c.id)} className="mt-2 w-full px-3 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors">Marcar como Paga</button>
-                      )}
-                    </div>
-                  ))}
+            {/* Abas */}
+            <div className="bg-white rounded-lg shadow-md">
+              <div className="border-b px-4 pt-3">
+                <div className="flex gap-2">
+                  <button onClick={() => setTab('dados')} className={`px-3 py-2 text-sm rounded-t ${tab==='dados' ? 'bg-gray-100 font-medium' : 'text-gray-600 hover:text-gray-800'}`}>Dados</button>
+                  {userRole !== 'contador' && (
+                    <>
+                      <button onClick={() => setTab('remedios')} className={`px-3 py-2 text-sm rounded-t ${tab==='remedios' ? 'bg-gray-100 font-medium' : 'text-gray-600 hover:text-gray-800'}`}>Remédios</button>
+                      <button onClick={() => setTab('ficha')} className={`px-3 py-2 text-sm rounded-t ${tab==='ficha' ? 'bg-gray-100 font-medium' : 'text-gray-600 hover:text-gray-800'}`}>Ficha</button>
+                    </>
+                  )}
                 </div>
-              )}
+              </div>
+              <div className="p-6">
+                {tab === 'dados' && (
+                  <div className="text-sm text-gray-700">
+                    <p>Estas são as informações cadastrais do paciente (acima). Use o botão Editar para atualizar.</p>
+                  </div>
+                )}
+                {tab === 'remedios' && (
+                  <div className="space-y-3">
+                    {consultas.filter(c=> (c.medicacoes||'').trim()).length===0 ? (
+                      <p className="text-gray-500 text-sm">Nenhuma medicação registrada nas consultas.</p>
+                    ) : (
+                      consultas.map((c, idx) => {
+                        const prev = consultas[idx + 1];
+                        const atual = (c.medicacoes || '').trim();
+                        if (!atual) return null;
+                        const mantida = prev ? atual === (prev?.medicacoes || '').trim() : false;
+                        return (
+                          <div key={`med-${c.id}`} className="bg-gray-50 p-3 rounded">
+                            <div className="flex justify-between">
+                              <div className="text-sm text-gray-800"><strong>{formatarData(c.data)}</strong> às {c.horario}</div>
+                              <div className="text-xs text-gray-500">{mantida ? 'medicação mantida' : 'medicação alterada'}</div>
+                            </div>
+                            <div className="mt-1 text-sm whitespace-pre-line">{c.medicacoes}</div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
+                {tab === 'ficha' && (
+                  <div>
+                    {consultas.length === 0 ? (
+                      <p className="text-gray-500">Nenhuma consulta registrada.</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {consultas.map((c, idx) => {
+                          const prev = consultas[idx + 1];
+                          const mantida = (c.medicacoes || '').trim() && (c.medicacoes || '').trim() === (prev?.medicacoes || '').trim();
+                          return (
+                            <div key={c.id} className="bg-gray-50 p-3 rounded-lg">
+                              <div className="flex justify-between items-start mb-1">
+                                <div>
+                                  <p className="font-medium text-gray-800">{formatarData(c.data)} às {c.horario}</p>
+                                  <p className="text-sm text-gray-600">{c.tipoConsulta === 'primeira' ? 'Primeira Vez' : 'Retorno'} - R$ {getValorConsulta(c.paciente).toFixed(2)}</p>
+                                </div>
+                                <div className={`text-sm font-medium ${c.jaPagou ? 'text-green-600' : 'text-red-600'}`}>{c.jaPagou ? '✅ Pago' : '❌ Pendente'}</div>
+                              </div>
+                              {c.observacoes && <p className="text-sm text-gray-600"><strong>Obs:</strong> {c.observacoes}</p>}
+                              {(c.medicacoes || c.resumo) && (
+                                <div className="mt-2 space-y-1 text-sm">
+                                  {c.medicacoes && (
+                                    <p className="text-gray-700">
+                                      <strong>Remédios:</strong> {c.medicacoes}
+                                      {prev && (c.medicacoes || '').trim() ? (
+                                        <span className={`ml-2 ${mantida ? 'text-green-600' : 'text-yellow-700'}`}>{mantida ? '(mantida)' : '(alterada)'}</span>
+                                      ) : null}
+                                    </p>
+                                  )}
+                                  {c.resumo && (
+                                    <p className="text-gray-700"><strong>Resumo:</strong> {c.resumo}</p>
+                                  )}
+                                </div>
+                              )}
+                              {!c.jaPagou && (
+                                <button onClick={() => marcarComoPaga(c.id)} className="mt-2 w-full px-3 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors">Marcar como Paga</button>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div>

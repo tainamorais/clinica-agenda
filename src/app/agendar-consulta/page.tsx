@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { supabase, isSupabaseConfigured } from '../../config/supabase-config';
+import { supabase, isSupabaseConfigured, isLocalCacheEnabled } from '../../config/supabase-config';
 
 interface Paciente {
   id: number;
@@ -30,6 +30,8 @@ interface Consulta {
   jaPagou: boolean;
   observacoes: string;
   dataAgendamento: string;
+  medicacoes?: string;
+  resumo?: string;
 }
 
 function AgendarConsultaInner() {
@@ -42,7 +44,9 @@ function AgendarConsultaInner() {
     horario: '',
     tipoConsulta: 'primeira',
     jaPagou: false,
-    observacoes: ''
+    observacoes: '',
+    medicacoes: '',
+    resumo: ''
   });
 
   const [pacienteSelecionado, setPacienteSelecionado] = useState<Paciente | null>(null);
@@ -87,16 +91,46 @@ function AgendarConsultaInner() {
             }
           }
         } else {
-          const pacientesSalvos = localStorage.getItem('pacientes');
+          const pacientesSalvos = isLocalCacheEnabled ? localStorage.getItem('pacientes') : null;
           if (pacientesSalvos) setPacientes(JSON.parse(pacientesSalvos));
         }
       } else {
-        const pacientesSalvos = localStorage.getItem('pacientes');
-        if (pacientesSalvos) setPacientes(JSON.parse(pacientesSalvos));
+        if (isLocalCacheEnabled) {
+          const pacientesSalvos = localStorage.getItem('pacientes');
+          if (pacientesSalvos) setPacientes(JSON.parse(pacientesSalvos));
+        }
       }
     };
     carregar();
   }, [searchParams]);
+
+  // Prefill da última medicação do paciente selecionado
+  useEffect(() => {
+    const pid = parseInt(formData.pacienteId || '');
+    if (!pid) return;
+    const prefill = async () => {
+      try {
+        if (isSupabaseConfigured) {
+          const { data } = await supabase
+            .from('consultas')
+            .select('medicacoes, data, horario')
+            .eq('paciente_id', pid)
+            .order('data', { ascending: false })
+            .order('horario', { ascending: false })
+            .limit(1);
+          const last = (data || [])[0];
+          if (last?.medicacoes) setFormData(prev => ({ ...prev, medicacoes: last.medicacoes }));
+        } else if (isLocalCacheEnabled) {
+          const consultas: any[] = JSON.parse(localStorage.getItem('consultas') || '[]');
+          const last = consultas
+            .filter(c => c.pacienteId === pid)
+            .sort((a, b) => (b.data + b.horario).localeCompare(a.data + a.horario))[0];
+          if (last?.medicacoes) setFormData(prev => ({ ...prev, medicacoes: last.medicacoes }));
+        }
+      } catch (_) {}
+    };
+    prefill();
+  }, [formData.pacienteId]);
 
   const salvarConsulta = async (consulta: Omit<Consulta, 'id' | 'dataAgendamento' | 'paciente'>) => {
     if (isSupabaseConfigured) {
@@ -117,38 +151,44 @@ function AgendarConsultaInner() {
         tipo_consulta: consulta.tipoConsulta,
         ja_pagou: consulta.jaPagou,
         observacoes: consulta.observacoes,
+        medicacoes: (formData as any).medicacoes || null,
+        resumo: (formData as any).resumo || null,
       };
       const { data, error } = await supabase.from('consultas').insert([payload]).select().single();
       if (error) throw error;
       // Espelha localmente para fallback das telas
       try {
-        const consultasExistentes = JSON.parse(localStorage.getItem('consultas') || '[]');
-        const novaConsulta: any = {
-          id: data?.id || Date.now(),
-          pacienteId: consulta.pacienteId,
-          paciente: pacienteSelecionado,
-          data: consulta.data,
-          horario: consulta.horario,
-          tipoConsulta: consulta.tipoConsulta,
-          jaPagou: consulta.jaPagou,
-          observacoes: consulta.observacoes,
-          dataAgendamento: data?.data_agendamento || new Date().toISOString(),
-        };
-        consultasExistentes.push(novaConsulta);
-        localStorage.setItem('consultas', JSON.stringify(consultasExistentes));
+        if (isLocalCacheEnabled) {
+          const consultasExistentes = JSON.parse(localStorage.getItem('consultas') || '[]');
+          const novaConsulta: any = {
+            id: data?.id || Date.now(),
+            pacienteId: consulta.pacienteId,
+            paciente: pacienteSelecionado,
+            data: consulta.data,
+            horario: consulta.horario,
+            tipoConsulta: consulta.tipoConsulta,
+            jaPagou: consulta.jaPagou,
+            observacoes: consulta.observacoes,
+            medicacoes: (formData as any).medicacoes || '',
+            resumo: (formData as any).resumo || '',
+            dataAgendamento: data?.data_agendamento || new Date().toISOString(),
+          };
+          consultasExistentes.push(novaConsulta);
+          localStorage.setItem('consultas', JSON.stringify(consultasExistentes));
+        }
       } catch (_) {}
       return true;
     }
     // Fallback local
     // Impeditivo local: mesma data e hora
-    const consultasExistentesLocal: Consulta[] = JSON.parse(localStorage.getItem('consultas') || '[]');
+    const consultasExistentesLocal: Consulta[] = isLocalCacheEnabled ? JSON.parse(localStorage.getItem('consultas') || '[]') : [];
     const conflitoLocal = consultasExistentesLocal.some((c) => c.data === consulta.data && c.horario === consulta.horario);
     if (conflitoLocal) throw new Error('Horário já ocupado para esta data.');
-    const consultasExistentes = JSON.parse(localStorage.getItem('consultas') || '[]');
+    const consultasExistentes = isLocalCacheEnabled ? JSON.parse(localStorage.getItem('consultas') || '[]') : [];
     const novoId = consultasExistentes.length > 0 ? Math.max(...consultasExistentes.map((c: Consulta) => c.id)) + 1 : 1;
     const novaConsulta: any = { ...consulta, id: novoId, dataAgendamento: new Date().toISOString(), paciente: pacienteSelecionado };
     consultasExistentes.push(novaConsulta);
-    localStorage.setItem('consultas', JSON.stringify(consultasExistentes));
+    if (isLocalCacheEnabled) localStorage.setItem('consultas', JSON.stringify(consultasExistentes));
     return true;
   };
 
@@ -191,7 +231,7 @@ function AgendarConsultaInner() {
   };
 
   const limparFormulario = () => {
-    setFormData({ pacienteId: '', data: '', horario: '', tipoConsulta: 'primeira', jaPagou: false, observacoes: '' });
+    setFormData({ pacienteId: '', data: '', horario: '', tipoConsulta: 'primeira', jaPagou: false, observacoes: '', medicacoes: '', resumo: '' });
     setPacienteSelecionado(null);
   };
 
@@ -283,6 +323,16 @@ function AgendarConsultaInner() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Observações</label>
             <textarea name="observacoes" value={formData.observacoes} onChange={handleInputChange} rows={3} className={textAreaClass} placeholder="Observações sobre a consulta..."></textarea>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Remédios em uso (um por linha)</label>
+            <textarea name="medicacoes" value={(formData as any).medicacoes} onChange={handleInputChange} rows={3} className={textAreaClass} placeholder="Ex.: Losartana 50mg 1x/dia\nMetformina 850mg 2x/dia"></textarea>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Resumo do atendimento</label>
+            <textarea name="resumo" value={(formData as any).resumo} onChange={handleInputChange} rows={4} className={textAreaClass} placeholder="Anamnese, conduta, orientações..."></textarea>
           </div>
 
           <div className="flex space-x-3 pt-4">

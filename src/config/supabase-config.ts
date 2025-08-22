@@ -32,6 +32,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 // Flag para sabermos se as credenciais estão presentes
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
+// Em produção recomendamos desativar cache local. Para ativar, defina NEXT_PUBLIC_LOCAL_CACHE=true
+export const isLocalCacheEnabled = (process.env.NEXT_PUBLIC_LOCAL_CACHE || '').toLowerCase() === 'true';
+
 // Tipos para as tabelas
 export interface Paciente {
   id: number;
@@ -58,6 +61,9 @@ export interface Consulta {
   observacoes: string;
   data_agendamento: string;
   created_at: string;
+  // Campos novos e opcionais
+  medicacoes?: string; // texto livre (um por linha)
+  resumo?: string; // resumo do atendimento
 }
 
 export interface ConsultaComPaciente extends Consulta {

@@ -4,7 +4,7 @@ import { formatISOToBR, calculateAgeFromISO } from '../../lib/date';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { supabase, isSupabaseConfigured } from '../../config/supabase-config';
+import { supabase, isSupabaseConfigured, isLocalCacheEnabled } from '../../config/supabase-config';
 
 interface Paciente {
   id: number;
@@ -87,7 +87,7 @@ export default function BuscarPaciente() {
             return;
           }
         }
-        const pacientesSalvos = localStorage.getItem('pacientes');
+        const pacientesSalvos = isLocalCacheEnabled ? localStorage.getItem('pacientes') : null;
         if (pacientesSalvos) {
           const pacientesCarregados: Paciente[] = JSON.parse(pacientesSalvos);
           setTodosPacientes(pacientesCarregados);

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { supabase, isSupabaseConfigured } from '../../config/supabase-config';
+import { supabase, isSupabaseConfigured, isLocalCacheEnabled } from '../../config/supabase-config';
 import { formatISOToBR } from '../../lib/date';
 
 interface Paciente {
@@ -76,7 +76,7 @@ export default function ConsultasPorData() {
           return;
         }
       }
-      const consultasSalvas = localStorage.getItem('consultas');
+      const consultasSalvas = isLocalCacheEnabled ? localStorage.getItem('consultas') : null;
       if (consultasSalvas) {
         const todas: Consulta[] = JSON.parse(consultasSalvas);
         const doDia = todas.filter(c => c.data === dataSelecionada);
@@ -101,9 +101,9 @@ export default function ConsultasPorData() {
         await carregarConsultas();
         return;
       }
-      const consultasSalvas: Consulta[] = JSON.parse(localStorage.getItem('consultas') || '[]');
+      const consultasSalvas: Consulta[] = isLocalCacheEnabled ? JSON.parse(localStorage.getItem('consultas') || '[]') : [];
       const atualizadas = consultasSalvas.map(c => (c.id === consultaId ? { ...c, jaPagou: true } : c));
-      localStorage.setItem('consultas', JSON.stringify(atualizadas));
+      if (isLocalCacheEnabled) localStorage.setItem('consultas', JSON.stringify(atualizadas));
       await carregarConsultas();
     } catch (e) {
       console.error(e);
@@ -122,9 +122,9 @@ export default function ConsultasPorData() {
         await carregarConsultas();
         return;
       }
-      const consultasSalvas: Consulta[] = JSON.parse(localStorage.getItem('consultas') || '[]');
+      const consultasSalvas: Consulta[] = isLocalCacheEnabled ? JSON.parse(localStorage.getItem('consultas') || '[]') : [];
       const atualizadas = consultasSalvas.filter(c => c.id !== consultaId);
-      localStorage.setItem('consultas', JSON.stringify(atualizadas));
+      if (isLocalCacheEnabled) localStorage.setItem('consultas', JSON.stringify(atualizadas));
       await carregarConsultas();
     } catch (e) {
       console.error(e);

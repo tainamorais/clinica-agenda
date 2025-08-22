@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { supabase, Paciente, isSupabaseConfigured } from '../../config/supabase-config';
+import { supabase, Paciente, isSupabaseConfigured, isLocalCacheEnabled } from '../../config/supabase-config';
 
 export default function CadastrarPaciente() {
   const [formData, setFormData] = useState({
@@ -23,7 +23,7 @@ export default function CadastrarPaciente() {
 
   // Função para salvar no Supabase ou localStorage se não configurado
   const salvarPaciente = async (paciente: Omit<Paciente, 'id' | 'data_cadastro' | 'created_at'>) => {
-    if (!isSupabaseConfigured) {
+    if (!isSupabaseConfigured && isLocalCacheEnabled) {
       try {
         const existentes = JSON.parse(localStorage.getItem('pacientes') || '[]');
         const novo = {
