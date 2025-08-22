@@ -177,6 +177,9 @@ npm run dev
 5. Configure as variáveis de ambiente (mesmas do `.env.local`)
 6. Clique em "Deploy"
 
+### Documento de visão geral
+- Para uma explicação simples do projeto (linguagem, tecnologias, segurança e recomendações), consulte o arquivo `PROJECT-OVERVIEW.md`. Esse documento é vivo e será atualizado conforme o projeto evoluir.
+
 ## 📞 Precisa de ajuda?
 
 **Problemas mais comuns:**
