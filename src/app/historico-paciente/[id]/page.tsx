@@ -285,11 +285,11 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
             <div className="bg-white rounded-lg shadow-md">
               <div className="border-b px-4 pt-3">
                 <div className="flex gap-2">
-                  <button onClick={() => setTab('dados')} className={`px-3 py-2 text-sm rounded-t ${tab==='dados' ? 'bg-white font-medium text-gray-900' : 'text-gray-600 hover:text-gray-800'}`}>Dados adicionais</button>
+                  <button onClick={() => setTab('dados')} className={`px-3 py-1.5 text-sm rounded-md ${tab==='dados' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}`}>Dados adicionais</button>
                   {userRole !== 'contador' && (
                     <>
-                      <button onClick={() => setTab('remedios')} className={`px-3 py-2 text-sm rounded-t ${tab==='remedios' ? 'bg-white font-medium text-gray-900' : 'text-gray-600 hover:text-gray-800'}`}>Remédios</button>
-                      <button onClick={() => setTab('ficha')} className={`px-3 py-2 text-sm rounded-t ${tab==='ficha' ? 'bg-white font-medium text-gray-900' : 'text-gray-600 hover:text-gray-800'}`}>Ficha</button>
+                      <button onClick={() => setTab('remedios')} className={`px-3 py-1.5 text-sm rounded-md ${tab==='remedios' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}`}>Remédios</button>
+                      <button onClick={() => setTab('ficha')} className={`px-3 py-1.5 text-sm rounded-md ${tab==='ficha' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}`}>Ficha</button>
                     </>
                   )}
                 </div>
@@ -312,11 +312,11 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
                         const mantida = prev ? atual === (prev?.medicacoes || '').trim() : false;
                         return (
                           <div key={`med-${c.id}`} className="bg-gray-50 p-3 rounded">
-                            <div className="flex justify-between">
-                              <div className="text-sm text-gray-800"><strong>{formatarData(c.data)}</strong> às {c.horario}</div>
-                              <div className="text-xs text-gray-500">{mantida ? 'medicação mantida' : 'medicação alterada'}</div>
+                            <div className="flex justify-between items-center">
+                              <div className="text-sm text-gray-900 font-medium"><span>{formatarData(c.data)}</span> <span className="text-gray-700">às {c.horario}</span></div>
+                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${mantida ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-800'}`}>{mantida ? 'medicação mantida' : 'medicação alterada'}</span>
                             </div>
-                            <div className="mt-1 text-sm whitespace-pre-line">{c.medicacoes}</div>
+                            <div className="mt-1 text-sm whitespace-pre-line text-gray-800">{c.medicacoes}</div>
                           </div>
                         );
                       })
@@ -358,7 +358,7 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
                                 </div>
                               )}
                               {editingId === c.id ? (
-                                <div className="mt-3 space-y-2">
+                                <div className="mt-3 space-y-2 bg-white border border-gray-200 p-3 rounded">
                                   <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Remédios em uso (um por linha)</label>
                                     <textarea value={editMedicacoes} onChange={(e) => setEditMedicacoes(e.target.value)} rows={3} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex.: Losartana 50mg 1x/dia\nMetformina 850mg 2x/dia" />
