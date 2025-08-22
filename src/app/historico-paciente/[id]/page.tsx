@@ -47,6 +47,10 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
   const [tipoMensagem, setTipoMensagem] = useState<'sucesso' | 'erro'>('sucesso');
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [tab, setTab] = useState<'dados' | 'remedios' | 'ficha'>('dados');
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editMedicacoes, setEditMedicacoes] = useState('');
+  const [editResumo, setEditResumo] = useState('');
+  const [savingInline, setSavingInline] = useState(false);
 
   useEffect(() => {
     carregar();
@@ -176,6 +180,47 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
 
   const formatarData = (data: string) => formatISOToBR(data);
 
+  const iniciarEdicao = (c: Consulta) => {
+    setEditingId(c.id);
+    setEditMedicacoes(c.medicacoes || '');
+    setEditResumo(c.resumo || '');
+  };
+
+  const cancelarEdicao = () => {
+    setEditingId(null);
+    setEditMedicacoes('');
+    setEditResumo('');
+  };
+
+  const salvarEdicao = async (consultaId: number) => {
+    try {
+      setSavingInline(true);
+      if (isSupabaseConfigured) {
+        const { error } = await supabase
+          .from('consultas')
+          .update({ medicacoes: editMedicacoes || null, resumo: editResumo || null })
+          .eq('id', consultaId);
+        if (error) throw error;
+      } else if (isLocalCacheEnabled) {
+        const cons: any[] = JSON.parse(localStorage.getItem('consultas') || '[]');
+        const atual = cons.map((c) => (c.id === consultaId ? { ...c, medicacoes: editMedicacoes, resumo: editResumo } : c));
+        localStorage.setItem('consultas', JSON.stringify(atual));
+      }
+      await carregar();
+      setMensagem('Consulta atualizada.');
+      setTipoMensagem('sucesso');
+      setTimeout(() => setMensagem(''), 3000);
+      cancelarEdicao();
+    } catch (e) {
+      console.error(e);
+      setMensagem('Erro ao salvar edição.');
+      setTipoMensagem('erro');
+      setTimeout(() => setMensagem(''), 3000);
+    } finally {
+      setSavingInline(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="max-w-md mx-auto">
@@ -240,11 +285,11 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
             <div className="bg-white rounded-lg shadow-md">
               <div className="border-b px-4 pt-3">
                 <div className="flex gap-2">
-                  <button onClick={() => setTab('dados')} className={`px-3 py-2 text-sm rounded-t ${tab==='dados' ? 'bg-gray-100 font-medium' : 'text-gray-600 hover:text-gray-800'}`}>Dados</button>
+                  <button onClick={() => setTab('dados')} className={`px-3 py-2 text-sm rounded-t ${tab==='dados' ? 'bg-white font-medium text-gray-900' : 'text-gray-600 hover:text-gray-800'}`}>Dados adicionais</button>
                   {userRole !== 'contador' && (
                     <>
-                      <button onClick={() => setTab('remedios')} className={`px-3 py-2 text-sm rounded-t ${tab==='remedios' ? 'bg-gray-100 font-medium' : 'text-gray-600 hover:text-gray-800'}`}>Remédios</button>
-                      <button onClick={() => setTab('ficha')} className={`px-3 py-2 text-sm rounded-t ${tab==='ficha' ? 'bg-gray-100 font-medium' : 'text-gray-600 hover:text-gray-800'}`}>Ficha</button>
+                      <button onClick={() => setTab('remedios')} className={`px-3 py-2 text-sm rounded-t ${tab==='remedios' ? 'bg-white font-medium text-gray-900' : 'text-gray-600 hover:text-gray-800'}`}>Remédios</button>
+                      <button onClick={() => setTab('ficha')} className={`px-3 py-2 text-sm rounded-t ${tab==='ficha' ? 'bg-white font-medium text-gray-900' : 'text-gray-600 hover:text-gray-800'}`}>Ficha</button>
                     </>
                   )}
                 </div>
@@ -252,7 +297,7 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
               <div className="p-6">
                 {tab === 'dados' && (
                   <div className="text-sm text-gray-700">
-                    <p>Estas são as informações cadastrais do paciente (acima). Use o botão Editar para atualizar.</p>
+                    <p>Área reservada para dados adicionais do paciente (em breve).</p>
                   </div>
                 )}
                 {tab === 'remedios' && (
@@ -312,8 +357,28 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
                                   )}
                                 </div>
                               )}
-                              {!c.jaPagou && (
-                                <button onClick={() => marcarComoPaga(c.id)} className="mt-2 w-full px-3 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors">Marcar como Paga</button>
+                              {editingId === c.id ? (
+                                <div className="mt-3 space-y-2">
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Remédios em uso (um por linha)</label>
+                                    <textarea value={editMedicacoes} onChange={(e) => setEditMedicacoes(e.target.value)} rows={3} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex.: Losartana 50mg 1x/dia\nMetformina 850mg 2x/dia" />
+                                  </div>
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Resumo do atendimento</label>
+                                    <textarea value={editResumo} onChange={(e) => setEditResumo(e.target.value)} rows={4} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Anamnese, conduta, orientações..." />
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <button disabled={savingInline} onClick={() => salvarEdicao(c.id)} className="px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400">Salvar</button>
+                                    <button onClick={cancelarEdicao} className="px-3 py-2 bg-gray-200 text-gray-800 text-sm rounded-md hover:bg-gray-300 transition-colors">Cancelar</button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="mt-2 grid grid-cols-2 gap-2">
+                                  {!c.jaPagou && (
+                                    <button onClick={() => marcarComoPaga(c.id)} className="px-3 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors">Marcar como Paga</button>
+                                  )}
+                                  <button onClick={() => iniciarEdicao(c)} className="px-3 py-2 bg-yellow-500 text-white text-sm rounded-md hover:bg-yellow-600 transition-colors">Editar</button>
+                                </div>
                               )}
                             </div>
                           );
