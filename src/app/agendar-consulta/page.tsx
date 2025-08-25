@@ -293,15 +293,7 @@ function AgendarConsultaInner() {
             <textarea name="observacoes" value={formData.observacoes} onChange={handleInputChange} rows={3} className={textAreaClass} placeholder="Observações sobre a consulta..."></textarea>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Remédios em uso (um por linha)</label>
-            <textarea name="medicacoes" value={(formData as any).medicacoes} onChange={handleInputChange} rows={3} className={textAreaClass} placeholder="Ex.: Losartana 50mg 1x/dia\nMetformina 850mg 2x/dia"></textarea>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Resumo do atendimento</label>
-            <textarea name="resumo" value={(formData as any).resumo} onChange={handleInputChange} rows={4} className={textAreaClass} placeholder="Anamnese, conduta, orientações..."></textarea>
-          </div>
+          {/* Campos de remédios e resumo foram movidos para a edição pós-consulta */}
 
           <div className="flex space-x-3 pt-4">
             <Link href="/" className="flex-1 px-4 py-2 text-center text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors">Cancelar</Link>
