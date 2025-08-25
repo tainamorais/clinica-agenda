@@ -64,6 +64,7 @@ export interface Consulta {
   // Campos novos e opcionais
   medicacoes?: string; // texto livre (um por linha)
   resumo?: string; // resumo do atendimento
+  duration_minutos?: number; // duração da consulta (minutos)
 }
 
 export interface ConsultaComPaciente extends Consulta {
@@ -75,5 +76,15 @@ export type UserRole = 'admin' | 'gestor' | 'medico' | 'contador';
 export interface AllowedEmail {
   email: string;
   role: UserRole;
+  created_at?: string;
+}
+
+// Bloqueios de agenda
+export interface Bloqueio {
+  id: number;
+  data: string; // YYYY-MM-DD
+  hora_inicio?: string | null; // HH:MM:SS
+  hora_fim?: string | null;    // HH:MM:SS
+  motivo?: string | null;
   created_at?: string;
 }

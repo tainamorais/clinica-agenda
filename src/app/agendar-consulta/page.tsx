@@ -46,6 +46,7 @@ function AgendarConsultaInner() {
     jaPagou: false,
     observacoes: ''
   });
+  const [durationMinutos, setDurationMinutos] = useState<number>(60);
 
   const [pacienteSelecionado, setPacienteSelecionado] = useState<Paciente | null>(null);
   const [mensagem, setMensagem] = useState('');
@@ -104,18 +105,29 @@ function AgendarConsultaInner() {
 
   // (Removido) Prefill de medicação não aparece no agendamento; será editado depois
 
+  // Helpers para checar sobreposição de horários
+  const toMinutes = (hhmm: string) => {
+    const [h, m] = hhmm.split(':').map((x) => parseInt(x || '0', 10));
+    return h * 60 + m;
+  };
+  const overlap = (aStart: number, aEnd: number, bStart: number, bEnd: number) => aStart < bEnd && bStart < aEnd;
+
   const salvarConsulta = async (consulta: Omit<Consulta, 'id' | 'dataAgendamento' | 'paciente'>) => {
     if (isSupabaseConfigured) {
-      // Impeditivo: mesma data e hora
-      const { data: conflito, error: errSel } = await supabase
+      // Impeditivo: conflito considerando duração
+      const { data: existentes, error: errSel } = await supabase
         .from('consultas')
-        .select('id')
-        .eq('data', consulta.data)
-        .eq('horario', consulta.horario)
-        .limit(1);
-      if (!errSel && conflito && conflito.length > 0) {
-        throw new Error('Horário já ocupado para esta data.');
-      }
+        .select('id, horario, duration_minutos')
+        .eq('data', consulta.data);
+      if (errSel) throw errSel;
+      const newStart = toMinutes(consulta.horario);
+      const newEnd = newStart + (durationMinutos || 60);
+      const temConflito = (existentes || []).some((c: any) => {
+        const cStart = toMinutes(c.horario);
+        const cEnd = cStart + (Number(c.duration_minutos) || 60);
+        return overlap(newStart, newEnd, cStart, cEnd);
+      });
+      if (temConflito) throw new Error('Conflito de horário: já existe consulta nesse intervalo.');
       const payload = {
         paciente_id: consulta.pacienteId,
         data: consulta.data,
@@ -123,6 +135,7 @@ function AgendarConsultaInner() {
         tipo_consulta: consulta.tipoConsulta,
         ja_pagou: consulta.jaPagou,
         observacoes: consulta.observacoes,
+        duration_minutos: durationMinutos,
       };
       const { data, error } = await supabase.from('consultas').insert([payload]).select().single();
       if (error) throw error;
@@ -139,6 +152,7 @@ function AgendarConsultaInner() {
             tipoConsulta: consulta.tipoConsulta,
             jaPagou: consulta.jaPagou,
             observacoes: consulta.observacoes,
+            duration_minutos: durationMinutos,
             dataAgendamento: data?.data_agendamento || new Date().toISOString(),
           };
           consultasExistentes.push(novaConsulta);
@@ -271,6 +285,15 @@ function AgendarConsultaInner() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Horário da Consulta *</label>
             <input type="time" name="horario" value={formData.horario} onChange={handleInputChange} required className={inputClass} />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Duração</label>
+            <select value={durationMinutos} onChange={(e) => setDurationMinutos(parseInt(e.target.value, 10))} className={selectClass}>
+              <option value={60}>1 hora (padrão)</option>
+              <option value={120}>2 horas</option>
+              <option value={30}>30 minutos (exceção)</option>
+            </select>
           </div>
 
           <div>
