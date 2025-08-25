@@ -44,9 +44,7 @@ function AgendarConsultaInner() {
     horario: '',
     tipoConsulta: 'primeira',
     jaPagou: false,
-    observacoes: '',
-    medicacoes: '',
-    resumo: ''
+    observacoes: ''
   });
 
   const [pacienteSelecionado, setPacienteSelecionado] = useState<Paciente | null>(null);
@@ -104,33 +102,7 @@ function AgendarConsultaInner() {
     carregar();
   }, [searchParams]);
 
-  // Prefill da última medicação do paciente selecionado
-  useEffect(() => {
-    const pid = parseInt(formData.pacienteId || '');
-    if (!pid) return;
-    const prefill = async () => {
-      try {
-        if (isSupabaseConfigured) {
-          const { data } = await supabase
-            .from('consultas')
-            .select('medicacoes, data, horario')
-            .eq('paciente_id', pid)
-            .order('data', { ascending: false })
-            .order('horario', { ascending: false })
-            .limit(1);
-          const last = (data || [])[0];
-          if (last?.medicacoes) setFormData(prev => ({ ...prev, medicacoes: last.medicacoes }));
-        } else if (isLocalCacheEnabled) {
-          const consultas: any[] = JSON.parse(localStorage.getItem('consultas') || '[]');
-          const last = consultas
-            .filter(c => c.pacienteId === pid)
-            .sort((a, b) => (b.data + b.horario).localeCompare(a.data + a.horario))[0];
-          if (last?.medicacoes) setFormData(prev => ({ ...prev, medicacoes: last.medicacoes }));
-        }
-      } catch (_) {}
-    };
-    prefill();
-  }, [formData.pacienteId]);
+  // (Removido) Prefill de medicação não aparece no agendamento; será editado depois
 
   const salvarConsulta = async (consulta: Omit<Consulta, 'id' | 'dataAgendamento' | 'paciente'>) => {
     if (isSupabaseConfigured) {
@@ -151,8 +123,6 @@ function AgendarConsultaInner() {
         tipo_consulta: consulta.tipoConsulta,
         ja_pagou: consulta.jaPagou,
         observacoes: consulta.observacoes,
-        medicacoes: (formData as any).medicacoes || null,
-        resumo: (formData as any).resumo || null,
       };
       const { data, error } = await supabase.from('consultas').insert([payload]).select().single();
       if (error) throw error;
@@ -169,8 +139,6 @@ function AgendarConsultaInner() {
             tipoConsulta: consulta.tipoConsulta,
             jaPagou: consulta.jaPagou,
             observacoes: consulta.observacoes,
-            medicacoes: (formData as any).medicacoes || '',
-            resumo: (formData as any).resumo || '',
             dataAgendamento: data?.data_agendamento || new Date().toISOString(),
           };
           consultasExistentes.push(novaConsulta);
@@ -231,7 +199,7 @@ function AgendarConsultaInner() {
   };
 
   const limparFormulario = () => {
-    setFormData({ pacienteId: '', data: '', horario: '', tipoConsulta: 'primeira', jaPagou: false, observacoes: '', medicacoes: '', resumo: '' });
+    setFormData({ pacienteId: '', data: '', horario: '', tipoConsulta: 'primeira', jaPagou: false, observacoes: '' });
     setPacienteSelecionado(null);
   };
 
