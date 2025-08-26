@@ -52,7 +52,7 @@ export default function BuscarPaciente() {
     if (!digits) return '#';
     const withCountry = digits.startsWith('55') ? digits : `55${digits}`;
     const firstName = (name || '').trim().split(' ')[0] || '';
-    const text = encodeURIComponent(firstName ? `Olá ${firstName}!` : 'Olá!');
+    const text = encodeURIComponent(firstName ? `Olá, ${firstName}!` : 'Olá!');
     return `https://wa.me/${withCountry}?text=${text}`;
   };
 

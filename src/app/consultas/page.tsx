@@ -181,6 +181,8 @@ export default function ConsultasPorData() {
     const end = start + 60;
     let status: 'livre'|'agendado'|'bloqueado' = 'livre';
     let texto: string | null = null;
+    let telefone: string | null = null;
+    let horarioConsulta: string | null = null;
     if (diaBloqueado) { status = 'bloqueado'; }
     // bloqueio por faixa
     if (status === 'livre') {
@@ -190,9 +192,14 @@ export default function ConsultasPorData() {
     // agendamento
     if (status === 'livre') {
       const cons = consultas.find(c => overlap(start, end, toMin(c.horario), toMin(c.horario) + (c.duration_minutos || 60)));
-      if (cons) { status = 'agendado'; texto = cons.paciente?.nome; }
+      if (cons) {
+        status = 'agendado';
+        texto = cons.paciente?.nome;
+        telefone = cons.paciente?.telefone || null;
+        horarioConsulta = cons.horario;
+      }
     }
-    return { ...s, status, texto };
+    return { ...s, status, texto, telefone, horarioConsulta };
   });
 
   // Cálculo extra: slots de 30min livres criados por consultas de 30min
@@ -413,9 +420,26 @@ export default function ConsultasPorData() {
                 <div className="text-sm font-medium text-gray-800 sm:w-20">{s.label}</div>
                 <div className="flex-1 text-sm text-gray-700 w-full sm:ml-2">
                   {s.status === 'agendado' && (
-                    <div>
+                    <div className="flex items-start justify-between gap-2">
                       <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-600 text-white mr-2">Agendado</span>
-                      {s.texto && (<span className="block text-blue-700 font-medium break-words leading-snug">{s.texto}</span>)}
+                      <span className="flex-1">
+                        {s.texto && (<span className="block text-blue-700 font-medium break-words leading-snug">{s.texto}</span>)}
+                        {s.horarioConsulta && (<span className="block text-xs text-gray-600">{s.horarioConsulta}</span>)}
+                      </span>
+                      {s.telefone && (
+                        <a
+                          href={`https://wa.me/${(s.telefone||'').replace(/\D/g,'').replace(/^55/,'') ? ((s.telefone||'').replace(/\D/g,'').startsWith('55') ? (s.telefone||'').replace(/\D/g,'') : '55'+(s.telefone||'').replace(/\D/g,'')) : ''}?text=${encodeURIComponent('Olá, ' + (s.texto?.split(' ')[0]||'') + '! Aqui é do consultório da Dra. Karen Proença. Confirmando sua consulta em ' + formatarDataBR(dataSelecionada) + ', às ' + (s.horarioConsulta||'') + '. Pode, por favor, confirmar presença respondendo esta mensagem? Obrigada!')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center text-green-600 hover:text-green-700 ml-2"
+                          title="Confirmar via WhatsApp"
+                          onClick={(e)=>e.stopPropagation()}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.031-.967-.273-.099-.472-.149-.672.15-.198.297-.768.966-.941 1.164-.173.199-.347.224-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.607.134-.133.298-.347.446-.52.149-.173.198-.298.298-.497.099-.198.05-.372-.025-.521-.075-.149-.672-1.614-.92-2.207-.242-.58-.487-.502-.672-.511l-.571-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.71.306 1.265.489 1.697.626.713.227 1.362.195 1.877.118.572-.085 1.758-.718 2.006-1.412.248-.694.248-1.289.173-1.412-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.999-3.648-.237-.374A9.86 9.86 0 012.29 12.02c0-5.45 4.436-9.885 9.887-9.885 2.64 0 5.122 1.03 6.988 2.897a9.825 9.825 0 012.894 6.994c-.003 5.45-4.438 9.885-9.888 9.885M20.13 3.893A11.815 11.815 0 0012.178.003C5.574.003.29 5.288.292 11.89c0 2.096.547 4.142 1.588 5.94L.057 24l6.334-1.665a11.87 11.87 0 005.79 1.475h.005c6.601 0 11.89-5.287 11.893-11.89a11.82 11.82 0 00-3.949-8.027"/>
+                          </svg>
+                        </a>
+                      )}
                     </div>
                   )}
                   {s.status === 'bloqueado' && (
