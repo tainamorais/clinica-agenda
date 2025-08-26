@@ -181,6 +181,34 @@ export default function ConsultasPorData() {
     return { ...s, status, texto };
   });
 
+  // Cálculo extra: slots de 30min livres criados por consultas de 30min
+  const extraMeiaHoraLivres = (() => {
+    if (diaBloqueado) return 0;
+    const DAY_START = 8 * 60;
+    const DAY_END = 21 * 60;
+    const consultasRanges = consultas.map(c => [toMin(c.horario), toMin(c.horario) + (c.duration_minutos || 60)] as [number, number]);
+    const bloqueiosRanges = bloqueios
+      .filter(b => b.hora_inicio && b.hora_fim)
+      .map(b => [toMin(b.hora_inicio!), toMin(b.hora_fim!)] as [number, number]);
+    const extras = new Set<number>(); // chave pelo início do slot extra
+    for (const c of consultas) {
+      if ((c.duration_minutos || 60) !== 30) continue;
+      const start = toMin(c.horario);
+      const rem = start % 60;
+      let r0 = 0, r1 = 0;
+      if (rem === 0) { r0 = start + 30; r1 = start + 60; }
+      else if (rem === 30) { r0 = start - 30; r1 = start; }
+      else continue;
+      if (r0 < DAY_START || r1 > DAY_END) continue;
+      // ocupado por outra consulta?
+      let ocupado = consultasRanges.some(([a,b]) => overlap(r0, r1, a, b));
+      // ocupado por bloqueio?
+      if (!ocupado) ocupado = bloqueiosRanges.some(([a,b]) => overlap(r0, r1, a, b));
+      if (!ocupado) extras.add(r0);
+    }
+    return extras.size;
+  })();
+
   // Ações: bloquear/desbloquear slot (1h)
   const toHHMM = (minutes: number) => `${String(Math.floor(minutes/60)).padStart(2,'0')}:${String(minutes%60).padStart(2,'0')}`;
 
@@ -301,12 +329,15 @@ export default function ConsultasPorData() {
             </div>
           </div>
 
-          {/* Resumo X livres de Y */}
+          {/* Resumo X livres de Y (considerando 30min e 2h) */}
           <div className="mt-4 p-3 rounded border bg-gray-50 text-center">
             {(() => {
-              const totalSlots = 13; // 08h..20h inclusive
-              const livre = slots.filter(s => s.status === 'livre').length;
-              return <span className="text-sm text-gray-700"><strong>{livre}</strong> livres de <strong>{totalSlots}</strong></span>;
+              // Base: 13 slots de 1h (08..20)
+              const baseLivres = slots.filter(s => s.status === 'livre').length;
+              // Extras criados por consultas de 30min (segunda meia hora livre)
+              const livres = baseLivres + extraMeiaHoraLivres;
+              const total = 13 + extraMeiaHoraLivres;
+              return <span className="text-sm text-gray-700"><strong>{livres}</strong> livres de <strong>{total}</strong></span>;
             })()}
           </div>
 
