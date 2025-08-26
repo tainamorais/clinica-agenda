@@ -181,6 +181,51 @@ export default function ConsultasPorData() {
     return { ...s, status, texto };
   });
 
+  // Ações: bloquear/desbloquear slot (1h)
+  const toHHMM = (minutes: number) => `${String(Math.floor(minutes/60)).padStart(2,'0')}:${String(minutes%60).padStart(2,'0')}`;
+
+  const bloquearSlot = async (startMin: number) => {
+    const hora_inicio = toHHMM(startMin);
+    const hora_fim = toHHMM(startMin + 60);
+    try {
+      if (isSupabaseConfigured) {
+        const { error } = await supabase.from('bloqueios').insert([{ data: dataSelecionada, hora_inicio, hora_fim }]);
+        if (error) throw error;
+      } else if (isLocalCacheEnabled) {
+        const blq = JSON.parse(localStorage.getItem('bloqueios') || '[]');
+        const novo = { id: Date.now(), data: dataSelecionada, hora_inicio, hora_fim };
+        blq.push(novo);
+        localStorage.setItem('bloqueios', JSON.stringify(blq));
+      }
+      await carregarConsultas();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const desbloquearSlot = async (startMin: number) => {
+    const hora_inicio = toHHMM(startMin);
+    const hora_fim = toHHMM(startMin + 60);
+    try {
+      if (isSupabaseConfigured) {
+        // apaga qualquer bloqueio que sobreponha o slot
+        const { data } = await supabase.from('bloqueios').select('id, hora_inicio, hora_fim').eq('data', dataSelecionada);
+        const alvo = (data as any[]|null)?.find(b => b.hora_inicio && b.hora_fim && overlap(toMin(hora_inicio), toMin(hora_fim), toMin(b.hora_inicio), toMin(b.hora_fim)));
+        if (alvo) {
+          const { error } = await supabase.from('bloqueios').delete().eq('id', alvo.id);
+          if (error) throw error;
+        }
+      } else if (isLocalCacheEnabled) {
+        const blq = JSON.parse(localStorage.getItem('bloqueios') || '[]') as any[];
+        const filtrado = blq.filter(b => !(b.data===dataSelecionada && b.hora_inicio && b.hora_fim && overlap(toMin(hora_inicio), toMin(hora_fim), toMin(b.hora_inicio), toMin(b.hora_fim))));
+        localStorage.setItem('bloqueios', JSON.stringify(filtrado));
+      }
+      await carregarConsultas();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="max-w-md mx-auto">
@@ -229,6 +274,14 @@ export default function ConsultasPorData() {
                   {s.status === 'agendado' && (<span className="text-blue-700">Agendado {s.texto ? `– ${s.texto}` : ''}</span>)}
                   {s.status === 'bloqueado' && (<span className="text-red-700">Bloqueado</span>)}
                   {s.status === 'livre' && (<span className="text-gray-500">Livre</span>)}
+                </div>
+                <div className="w-40 text-right">
+                  {s.status === 'livre' && (
+                    <button onClick={() => bloquearSlot(s.startMin)} className="text-xs px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700">Bloquear</button>
+                  )}
+                  {s.status === 'bloqueado' && !diaBloqueado && (
+                    <button onClick={() => desbloquearSlot(s.startMin)} className="text-xs px-3 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">Desbloquear</button>
+                  )}
                 </div>
               </div>
             ))}
