@@ -270,10 +270,19 @@ export default function ConsultasPorData() {
             {slots.map(s => (
               <div key={s.label} className={`flex items-center justify-between rounded border px-3 py-2 ${s.status==='agendado' ? 'bg-blue-50 border-blue-200' : s.status==='bloqueado' ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
                 <div className="text-sm font-medium text-gray-800 w-20">{s.label}</div>
-                <div className="flex-1 text-sm text-gray-700">
-                  {s.status === 'agendado' && (<span className="text-blue-700">Agendado {s.texto ? `– ${s.texto}` : ''}</span>)}
-                  {s.status === 'bloqueado' && (<span className="text-red-700">Bloqueado</span>)}
-                  {s.status === 'livre' && (<span className="text-gray-500">Livre</span>)}
+                <div className="flex-1 text-sm text-gray-700 flex items-center gap-2 overflow-hidden">
+                  {s.status === 'agendado' && (
+                    <>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-600 text-white">Agendado</span>
+                      {s.texto && (<span className="text-blue-700 truncate">{s.texto}</span>)}
+                    </>
+                  )}
+                  {s.status === 'bloqueado' && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-red-600 text-white">Bloqueado</span>
+                  )}
+                  {s.status === 'livre' && (
+                    <span className="text-gray-500">Livre</span>
+                  )}
                 </div>
                 <div className="w-40 text-right">
                   {s.status === 'livre' && (
