@@ -148,6 +148,19 @@ export default function ConsultasPorData() {
   const formatarDataBR = (iso: string) => formatISOToBR(iso);
 
   // Grade (somente leitura)
+  const [weekendOverride, setWeekendOverride] = useState<boolean>(false);
+  useEffect(() => {
+    try {
+      const key = `weekend_unlocked_${dataSelecionada}`;
+      const v = typeof window !== 'undefined' ? localStorage.getItem(key) : null;
+      setWeekendOverride(v === 'true');
+    } catch {}
+  }, [dataSelecionada]);
+  const isWeekendDay = (() => {
+    const d = new Date(`${dataSelecionada}T00:00:00`);
+    const wd = d.getDay();
+    return wd === 0 || wd === 6; // domingo(0) ou sábado(6)
+  })();
   const gerarSlots = () => {
     const slots: { label: string; startMin: number }[] = [];
     for (let h = 8; h <= 20; h++) {
@@ -161,7 +174,8 @@ export default function ConsultasPorData() {
     return h * 60 + m;
   };
   const overlap = (a1: number, a2: number, b1: number, b2: number) => a1 < b2 && b1 < a2;
-  const diaBloqueado = bloqueios.some(b => !b.hora_inicio && !b.hora_fim);
+  const temBloqueioDia = bloqueios.some(b => !b.hora_inicio && !b.hora_fim);
+  const diaBloqueado = temBloqueioDia || (isWeekendDay && !weekendOverride);
   const slots = gerarSlots().map(s => {
     const start = s.startMin;
     const end = start + 60;
@@ -205,6 +219,31 @@ export default function ConsultasPorData() {
       // ocupado por bloqueio?
       if (!ocupado) ocupado = bloqueiosRanges.some(([a,b]) => overlap(r0, r1, a, b));
       if (!ocupado) extras.add(r0);
+    }
+    return extras.size;
+  })();
+
+  // Total de meias-horas válidas (conta mesmo se já agendado)
+  const extraMeiaHoraTotal = (() => {
+    if (diaBloqueado) return 0;
+    const DAY_START = 8 * 60;
+    const DAY_END = 21 * 60;
+    const bloqueiosRanges = bloqueios
+      .filter(b => b.hora_inicio && b.hora_fim)
+      .map(b => [toMin(b.hora_inicio!), toMin(b.hora_fim!)] as [number, number]);
+    const extras = new Set<number>();
+    for (const c of consultas) {
+      if ((c.duration_minutos || 60) !== 30) continue;
+      const start = toMin(c.horario);
+      const rem = start % 60;
+      let r0 = 0, r1 = 0;
+      if (rem === 0) { r0 = start + 30; r1 = start + 60; }
+      else if (rem === 30) { r0 = start - 30; r1 = start; }
+      else continue;
+      if (r0 < DAY_START || r1 > DAY_END) continue;
+      // não conta se estiver bloqueado
+      const bloqueado = bloqueiosRanges.some(([a,b]) => overlap(r0, r1, a, b));
+      if (!bloqueado) extras.add(r0);
     }
     return extras.size;
   })();
@@ -329,21 +368,35 @@ export default function ConsultasPorData() {
             </div>
           </div>
 
-          {/* Resumo X livres de Y (considerando 30min e 2h) */}
+          {/* Resumo X livres de Y (total considera apenas slots não bloqueados) */}
           <div className="mt-4 p-3 rounded border bg-gray-50 text-center">
             {(() => {
-              // Base: 13 slots de 1h (08..20)
+              // Base: 13 slots. Total considera livres + agendados (exclui bloqueados)
+              const baseNaoBloqueados = slots.filter(s => s.status !== 'bloqueado').length;
               const baseLivres = slots.filter(s => s.status === 'livre').length;
-              // Extras criados por consultas de 30min (segunda meia hora livre)
+              // Extras de meia-hora: total conta os válidos; livres conta os que estão livres
+              const total = baseNaoBloqueados + extraMeiaHoraTotal;
               const livres = baseLivres + extraMeiaHoraLivres;
-              const total = 13 + extraMeiaHoraLivres;
               return <span className="text-sm text-gray-700"><strong>{livres}</strong> livres de <strong>{total}</strong></span>;
             })()}
           </div>
 
           {/* Ações de dia inteiro */}
           <div className="mt-4 flex items-center justify-center gap-3">
-            {!diaBloqueado ? (
+            {isWeekendDay && (
+              <button
+                onClick={() => {
+                  try {
+                    const key = `weekend_unlocked_${dataSelecionada}`;
+                    const next = !weekendOverride;
+                    localStorage.setItem(key, String(next));
+                    setWeekendOverride(next);
+                  } catch {}
+                }}
+                className="px-3 py-2 text-sm bg-purple-600 text-white rounded hover:bg-purple-700"
+              >{weekendOverride ? 'Reaplicar bloqueio de fim de semana' : 'Desbloquear fim de semana (exceção)'}</button>
+            )}
+            {!temBloqueioDia ? (
               <button onClick={bloquearDia} className="px-3 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700">Bloquear dia inteiro</button>
             ) : (
               <button onClick={desbloquearDia} className="px-3 py-2 text-sm bg-gray-200 text-gray-800 rounded hover:bg-gray-300">Desbloquear dia inteiro</button>
@@ -356,7 +409,7 @@ export default function ConsultasPorData() {
           <h3 className="font-semibold text-gray-800 mb-3">Agenda do dia</h3>
           <div className="space-y-2">
             {slots.map(s => (
-              <div key={s.label} className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 sm:gap-0 rounded border px-3 py-2 ${s.status==='agendado' ? 'bg-blue-50 border-blue-200' : s.status==='bloqueado' ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
+              <div key={s.label} className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 sm:gap-0 rounded border px-3 py-2 ${s.status==='agendado' ? 'bg-blue-50 border-blue-200' : s.status==='bloqueado' ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}>
                 <div className="text-sm font-medium text-gray-800 sm:w-20">{s.label}</div>
                 <div className="flex-1 text-sm text-gray-700 w-full sm:ml-2">
                   {s.status === 'agendado' && (
@@ -369,12 +422,15 @@ export default function ConsultasPorData() {
                     <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-red-600 text-white">Bloqueado</span>
                   )}
                   {s.status === 'livre' && (
-                    <span className="text-gray-600">Livre</span>
+                    <span className="text-green-700 font-medium">Livre</span>
                   )}
                 </div>
                 <div className="sm:w-40 sm:text-right w-full">
                   {s.status === 'livre' && (
-                    <button onClick={() => bloquearSlot(s.startMin)} className="w-full sm:w-auto text-xs px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700">Bloquear</button>
+                    <button aria-label="Bloquear" title="Bloquear" onClick={() => bloquearSlot(s.startMin)} className="w-8 h-8 sm:w-7 sm:h-7 inline-flex items-center justify-center rounded bg-green-600 text-white hover:bg-green-700">
+                      <span className="sr-only">Bloquear</span>
+                      🔒
+                    </button>
                   )}
                   {s.status === 'bloqueado' && !diaBloqueado && (
                     <button onClick={() => desbloquearSlot(s.startMin)} className="w-full sm:w-auto text-xs px-3 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">Desbloquear</button>
