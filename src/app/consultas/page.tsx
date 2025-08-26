@@ -226,6 +226,45 @@ export default function ConsultasPorData() {
     }
   };
 
+  // Ações: bloquear/desbloquear dia inteiro
+  const bloquearDia = async () => {
+    try {
+      if (isSupabaseConfigured) {
+        const { error } = await supabase.from('bloqueios').insert([{ data: dataSelecionada, hora_inicio: null, hora_fim: null }]);
+        if (error) throw error;
+      } else if (isLocalCacheEnabled) {
+        const blq = JSON.parse(localStorage.getItem('bloqueios') || '[]');
+        const novo = { id: Date.now(), data: dataSelecionada, hora_inicio: null, hora_fim: null };
+        blq.push(novo);
+        localStorage.setItem('bloqueios', JSON.stringify(blq));
+      }
+      await carregarConsultas();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const desbloquearDia = async () => {
+    try {
+      if (isSupabaseConfigured) {
+        const { error } = await supabase
+          .from('bloqueios')
+          .delete()
+          .eq('data', dataSelecionada)
+          .is('hora_inicio', null)
+          .is('hora_fim', null);
+        if (error) throw error;
+      } else if (isLocalCacheEnabled) {
+        const blq = JSON.parse(localStorage.getItem('bloqueios') || '[]') as any[];
+        const filtrado = blq.filter(b => !(b.data===dataSelecionada && (b.hora_inicio==null) && (b.hora_fim==null)));
+        localStorage.setItem('bloqueios', JSON.stringify(filtrado));
+      }
+      await carregarConsultas();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="max-w-md mx-auto">
@@ -249,7 +288,7 @@ export default function ConsultasPorData() {
           </div>
         </div>
 
-        {/* Estatísticas */}
+        {/* Estatísticas + Resumo do dia */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <div className="grid grid-cols-2 gap-4 text-center">
             <div>
@@ -260,6 +299,24 @@ export default function ConsultasPorData() {
               <p className="text-2xl font-bold text-green-600">{consultas.filter(c => c.jaPagou).length}</p>
               <p className="text-sm text-gray-600">Já Pagas</p>
             </div>
+          </div>
+
+          {/* Resumo X livres de Y */}
+          <div className="mt-4 p-3 rounded border bg-gray-50 text-center">
+            {(() => {
+              const totalSlots = 13; // 08h..20h inclusive
+              const livre = slots.filter(s => s.status === 'livre').length;
+              return <span className="text-sm text-gray-700"><strong>{livre}</strong> livres de <strong>{totalSlots}</strong></span>;
+            })()}
+          </div>
+
+          {/* Ações de dia inteiro */}
+          <div className="mt-4 flex items-center justify-center gap-3">
+            {!diaBloqueado ? (
+              <button onClick={bloquearDia} className="px-3 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700">Bloquear dia inteiro</button>
+            ) : (
+              <button onClick={desbloquearDia} className="px-3 py-2 text-sm bg-gray-200 text-gray-800 rounded hover:bg-gray-300">Desbloquear dia inteiro</button>
+            )}
           </div>
         </div>
 
