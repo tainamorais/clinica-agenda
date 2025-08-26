@@ -356,28 +356,28 @@ export default function ConsultasPorData() {
           <h3 className="font-semibold text-gray-800 mb-3">Agenda do dia</h3>
           <div className="space-y-2">
             {slots.map(s => (
-              <div key={s.label} className={`flex items-center justify-between rounded border px-3 py-2 ${s.status==='agendado' ? 'bg-blue-50 border-blue-200' : s.status==='bloqueado' ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
-                <div className="text-sm font-medium text-gray-800 w-20">{s.label}</div>
-                <div className="flex-1 text-sm text-gray-700 flex items-center gap-2 overflow-hidden">
+              <div key={s.label} className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 sm:gap-0 rounded border px-3 py-2 ${s.status==='agendado' ? 'bg-blue-50 border-blue-200' : s.status==='bloqueado' ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
+                <div className="text-sm font-medium text-gray-800 sm:w-20">{s.label}</div>
+                <div className="flex-1 text-sm text-gray-700 w-full sm:ml-2">
                   {s.status === 'agendado' && (
-                    <>
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-600 text-white">Agendado</span>
-                      {s.texto && (<span className="text-blue-700 truncate">{s.texto}</span>)}
-                    </>
+                    <div>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-600 text-white mr-2">Agendado</span>
+                      {s.texto && (<span className="block text-blue-700 font-medium break-words leading-snug">{s.texto}</span>)}
+                    </div>
                   )}
                   {s.status === 'bloqueado' && (
                     <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-red-600 text-white">Bloqueado</span>
                   )}
                   {s.status === 'livre' && (
-                    <span className="text-gray-500">Livre</span>
+                    <span className="text-gray-600">Livre</span>
                   )}
                 </div>
-                <div className="w-40 text-right">
+                <div className="sm:w-40 sm:text-right w-full">
                   {s.status === 'livre' && (
-                    <button onClick={() => bloquearSlot(s.startMin)} className="text-xs px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700">Bloquear</button>
+                    <button onClick={() => bloquearSlot(s.startMin)} className="w-full sm:w-auto text-xs px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700">Bloquear</button>
                   )}
                   {s.status === 'bloqueado' && !diaBloqueado && (
-                    <button onClick={() => desbloquearSlot(s.startMin)} className="text-xs px-3 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">Desbloquear</button>
+                    <button onClick={() => desbloquearSlot(s.startMin)} className="w-full sm:w-auto text-xs px-3 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">Desbloquear</button>
                   )}
                 </div>
               </div>
