@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { supabase, isSupabaseConfigured, isLocalCacheEnabled } from '../../config/supabase-config';
+import { supabase, isSupabaseConfigured, isLocalCacheEnabled, Bloqueio } from '../../config/supabase-config';
 import { formatISOToBR } from '../../lib/date';
 
 interface Paciente {
@@ -27,6 +27,7 @@ interface Consulta {
   jaPagou: boolean;
   observacoes: string;
   dataAgendamento: string;
+  duration_minutos?: number;
 }
 
 const getValorConsulta = (p: Paciente) => {
@@ -39,6 +40,7 @@ export default function ConsultasPorData() {
     new Date().toISOString().split('T')[0]
   );
   const [consultas, setConsultas] = useState<Consulta[]>([]);
+  const [bloqueios, setBloqueios] = useState<Bloqueio[]>([]);
 
   useEffect(() => {
     carregarConsultas();
@@ -71,8 +73,12 @@ export default function ConsultasPorData() {
             jaPagou: row.ja_pagou,
             observacoes: row.observacoes || '',
             dataAgendamento: row.data_agendamento,
+            duration_minutos: row.duration_minutos ?? 60,
           }));
           setConsultas(mapeadas);
+          // Bloqueios do dia
+          const { data: blq } = await supabase.from('bloqueios').select('*').eq('data', dataSelecionada);
+          setBloqueios((blq as any) || []);
           return;
         }
       }
@@ -83,6 +89,13 @@ export default function ConsultasPorData() {
         setConsultas(doDia);
       } else {
         setConsultas([]);
+      }
+      // Local: bloqueios não persistidos se cache desabilitado
+      if (isLocalCacheEnabled) {
+        const blq = JSON.parse(localStorage.getItem('bloqueios') || '[]') as Bloqueio[];
+        setBloqueios(blq.filter(b => b.data === dataSelecionada));
+      } else {
+        setBloqueios([]);
       }
     } catch (e) {
       console.error(e);
@@ -134,6 +147,40 @@ export default function ConsultasPorData() {
   const consultasOrdenadas = [...consultas].sort((a, b) => a.horario.localeCompare(b.horario));
   const formatarDataBR = (iso: string) => formatISOToBR(iso);
 
+  // Grade (somente leitura)
+  const gerarSlots = () => {
+    const slots: { label: string; startMin: number }[] = [];
+    for (let h = 8; h <= 20; h++) {
+      const hh = String(h).padStart(2, '0');
+      slots.push({ label: `${hh}:00`, startMin: h * 60 });
+    }
+    return slots;
+  };
+  const toMin = (hhmm: string) => {
+    const [h, m] = hhmm.split(':').map(n => parseInt(n || '0', 10));
+    return h * 60 + m;
+  };
+  const overlap = (a1: number, a2: number, b1: number, b2: number) => a1 < b2 && b1 < a2;
+  const diaBloqueado = bloqueios.some(b => !b.hora_inicio && !b.hora_fim);
+  const slots = gerarSlots().map(s => {
+    const start = s.startMin;
+    const end = start + 60;
+    let status: 'livre'|'agendado'|'bloqueado' = 'livre';
+    let texto: string | null = null;
+    if (diaBloqueado) { status = 'bloqueado'; }
+    // bloqueio por faixa
+    if (status === 'livre') {
+      const blq = bloqueios.find(b => b.hora_inicio && b.hora_fim && overlap(start, end, toMin(b.hora_inicio!), toMin(b.hora_fim!)));
+      if (blq) status = 'bloqueado';
+    }
+    // agendamento
+    if (status === 'livre') {
+      const cons = consultas.find(c => overlap(start, end, toMin(c.horario), toMin(c.horario) + (c.duration_minutos || 60)));
+      if (cons) { status = 'agendado'; texto = cons.paciente?.nome; }
+    }
+    return { ...s, status, texto };
+  });
+
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="max-w-md mx-auto">
@@ -168,6 +215,23 @@ export default function ConsultasPorData() {
               <p className="text-2xl font-bold text-green-600">{consultas.filter(c => c.jaPagou).length}</p>
               <p className="text-sm text-gray-600">Já Pagas</p>
             </div>
+          </div>
+        </div>
+
+        {/* Grade do dia 08:00–20:00 (somente leitura) */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <h3 className="font-semibold text-gray-800 mb-3">Agenda do dia</h3>
+          <div className="space-y-2">
+            {slots.map(s => (
+              <div key={s.label} className={`flex items-center justify-between rounded border px-3 py-2 ${s.status==='agendado' ? 'bg-blue-50 border-blue-200' : s.status==='bloqueado' ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
+                <div className="text-sm font-medium text-gray-800 w-20">{s.label}</div>
+                <div className="flex-1 text-sm text-gray-700">
+                  {s.status === 'agendado' && (<span className="text-blue-700">Agendado {s.texto ? `– ${s.texto}` : ''}</span>)}
+                  {s.status === 'bloqueado' && (<span className="text-red-700">Bloqueado</span>)}
+                  {s.status === 'livre' && (<span className="text-gray-500">Livre</span>)}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
