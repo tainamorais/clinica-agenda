@@ -425,15 +425,30 @@ export default function ConsultasPorData() {
                     <span className="text-green-700 font-medium">Livre</span>
                   )}
                 </div>
-                <div className="sm:w-40 sm:text-right w-full">
+                <div className="ml-auto w-auto sm:text-right">
                   {s.status === 'livre' && (
-                    <button aria-label="Bloquear" title="Bloquear" onClick={() => bloquearSlot(s.startMin)} className="w-8 h-8 sm:w-7 sm:h-7 inline-flex items-center justify-center rounded bg-green-600 text-white hover:bg-green-700">
-                      <span className="sr-only">Bloquear</span>
-                      🔒
+                    <button
+                      aria-label="Bloquear"
+                      title="Bloquear"
+                      onClick={() => bloquearSlot(s.startMin)}
+                      className="inline-flex items-center justify-center text-red-600 hover:text-red-700"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                        <path d="M17 8h-1V6a4 4 0 10-8 0v2H7a2 2 0 00-2 2v8a2 2 0 002 2h10a2 2 0 002-2v-8a2 2 0 00-2-2zm-6 0V6a2 2 0 114 0v2h-4z" />
+                      </svg>
                     </button>
                   )}
                   {s.status === 'bloqueado' && !diaBloqueado && (
-                    <button onClick={() => desbloquearSlot(s.startMin)} className="w-full sm:w-auto text-xs px-3 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">Desbloquear</button>
+                    <button
+                      aria-label="Desbloquear"
+                      title="Desbloquear"
+                      onClick={() => desbloquearSlot(s.startMin)}
+                      className="inline-flex items-center justify-center text-green-600 hover:text-green-700"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                        <path d="M17 8h-6V6a4 4 0 118 0v1a1 1 0 11-2 0V6a2 2 0 10-4 0v2h4a2 2 0 012 2v8a2 2 0 01-2 2H7a2 2 0 01-2-2v-8a2 2 0 012-2h10z" />
+                      </svg>
+                    </button>
                   )}
                 </div>
               </div>
