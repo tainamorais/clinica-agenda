@@ -106,27 +106,7 @@ export default function Home() {
             </div>
           </Link>
 
-          {/* Histórico */}
-          <Link href="/historico">
-            <div className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-all">
-              <div className="flex items-center space-x-4">
-                <div className="bg-purple-100 p-3 rounded-full">
-                  <span className="text-2xl">📊</span>
-                </div>
-                <div className="flex-1">
-                  <h2 className="text-lg font-semibold text-gray-800">
-                    Histórico
-                  </h2>
-                  <p className="text-sm text-gray-600">
-                    Consultas e pagamentos
-                  </p>
-                </div>
-                <div className="text-gray-400">
-                  <span className="text-xl">→</span>
-                </div>
-              </div>
-            </div>
-          </Link>
+          {/* Histórico (removido em favor de Financeiro) */}
 
           {/* Financeiro */}
           <Link href="/financeiro">
