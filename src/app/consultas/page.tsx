@@ -428,7 +428,7 @@ export default function ConsultasPorData() {
                       </span>
                       {s.telefone && (
                         <a
-                          href={`https://wa.me/${(s.telefone||'').replace(/\D/g,'').replace(/^55/,'') ? ((s.telefone||'').replace(/\D/g,'').startsWith('55') ? (s.telefone||'').replace(/\D/g,'') : '55'+(s.telefone||'').replace(/\D/g,'')) : ''}?text=${encodeURIComponent('Olá, ' + (s.texto?.split(' ')[0]||'') + '! Aqui é do consultório da Dra. Karen Proença. Confirmando sua consulta em ' + formatarDataBR(dataSelecionada) + ', às ' + (s.horarioConsulta||'') + '. Pode, por favor, confirmar presença respondendo esta mensagem? Obrigada!')}`}
+                          href={`https://wa.me/${(s.telefone||'').replace(/\D/g,'').replace(/^55/,'') ? ((s.telefone||'').replace(/\D/g,'').startsWith('55') ? (s.telefone||'').replace(/\D/g,'') : '55'+(s.telefone||'').replace(/\D/g,'')) : ''}?text=${encodeURIComponent('Olá, ' + (s.texto?.split(' ')[0]||'') + '! Aqui é do consultório da Dra. Cida. Confirmando sua consulta em ' + formatarDataBR(dataSelecionada) + ', às ' + (s.horarioConsulta||'') + '. Pode, por favor, confirmar presença respondendo esta mensagem? Obrigada!')}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center justify-center text-green-600 hover:text-green-700 ml-2"

@@ -47,6 +47,9 @@ function AgendarConsultaInner() {
     observacoes: ''
   });
   const [durationMinutos, setDurationMinutos] = useState<number>(60);
+  const [consultasDoDia, setConsultasDoDia] = useState<Array<{horario: string; duration_minutos?: number}>>([]);
+  const [bloqueiosDoDia, setBloqueiosDoDia] = useState<Array<{hora_inicio: string|null; hora_fim: string|null}>>([]);
+  const [slotsDisponiveis, setSlotsDisponiveis] = useState<string[]>([]);
 
   const [pacienteSelecionado, setPacienteSelecionado] = useState<Paciente | null>(null);
   const [mensagem, setMensagem] = useState('');
@@ -111,6 +114,82 @@ function AgendarConsultaInner() {
     return h * 60 + m;
   };
   const overlap = (aStart: number, aEnd: number, bStart: number, bEnd: number) => aStart < bEnd && bStart < aEnd;
+
+  // Carrega consultas/bloqueios da data escolhida
+  useEffect(() => {
+    const carregarDia = async () => {
+      if (!formData.data) {
+        setConsultasDoDia([]);
+        setBloqueiosDoDia([]);
+        return;
+      }
+      try {
+        if (isSupabaseConfigured) {
+          const [{ data: cons }, { data: blq }] = await Promise.all([
+            supabase.from('consultas').select('horario, duration_minutos').eq('data', formData.data),
+            supabase.from('bloqueios').select('hora_inicio, hora_fim').eq('data', formData.data),
+          ]);
+          setConsultasDoDia((cons as any[]) || []);
+          setBloqueiosDoDia((blq as any[]) || []);
+        } else {
+          const consAll = isLocalCacheEnabled ? JSON.parse(localStorage.getItem('consultas') || '[]') : [];
+          setConsultasDoDia((consAll as any[]).filter(c => c.data === formData.data).map((c:any)=>({ horario: c.horario, duration_minutos: c.duration_minutos })));
+          const blqAll = isLocalCacheEnabled ? JSON.parse(localStorage.getItem('bloqueios') || '[]') : [];
+          setBloqueiosDoDia((blqAll as any[]).filter(b => b.data === formData.data));
+        }
+      } catch (e) {
+        setConsultasDoDia([]);
+        setBloqueiosDoDia([]);
+      }
+    };
+    carregarDia();
+  }, [formData.data]);
+
+  // Recalcula slots disponíveis quando data/duração/dia muda
+  useEffect(() => {
+    const toMin = (hhmm: string) => {
+      const [h, m] = hhmm.split(':').map((x) => parseInt(x || '0', 10));
+      return h * 60 + m;
+    };
+    const toHHMM = (m: number) => `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
+    const DAY_START = 8 * 60;
+    const DAY_END = 21 * 60; // limite de término
+
+    // Dia bloqueado?
+    const diaBloqueado = bloqueiosDoDia.some(b => b.hora_inicio == null && b.hora_fim == null);
+    if (!formData.data || diaBloqueado) {
+      setSlotsDisponiveis([]);
+      return;
+    }
+
+    const consultasRanges = consultasDoDia.map(c => [toMin(c.horario), toMin(c.horario) + (Number(c.duration_minutos) || 60)] as [number, number]);
+    const bloqueiosRanges = bloqueiosDoDia
+      .filter(b => b.hora_inicio && b.hora_fim)
+      .map(b => [toMin(b.hora_inicio as string), toMin(b.hora_fim as string)] as [number, number]);
+
+    const candidatos: number[] = [];
+    if (durationMinutos === 60) {
+      for (let h = 8; h <= 20; h++) candidatos.push(h * 60);
+    } else if (durationMinutos === 120) {
+      for (let h = 8; h <= 19; h++) candidatos.push(h * 60);
+    } else if (durationMinutos === 30) {
+      for (let m = DAY_START; m <= DAY_END - 30; m += 30) candidatos.push(m);
+    }
+
+    const livres: string[] = [];
+    for (const start of candidatos) {
+      const end = start + durationMinutos;
+      if (end > DAY_END) continue;
+      let ocupado = consultasRanges.some(([a,b]) => overlap(start, end, a, b));
+      if (!ocupado) ocupado = bloqueiosRanges.some(([a,b]) => overlap(start, end, a, b));
+      if (!ocupado) livres.push(toHHMM(start));
+    }
+    setSlotsDisponiveis(livres);
+    // Se horário selecionado não está mais disponível, limpa
+    if (formData.horario && !livres.includes(formData.horario)) {
+      setFormData(prev => ({ ...prev, horario: '' }));
+    }
+  }, [consultasDoDia, bloqueiosDoDia, durationMinutos, formData.data]);
 
   const salvarConsulta = async (consulta: Omit<Consulta, 'id' | 'dataAgendamento' | 'paciente'>) => {
     if (isSupabaseConfigured) {
@@ -284,7 +363,26 @@ function AgendarConsultaInner() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Horário da Consulta *</label>
-            <input type="time" name="horario" value={formData.horario} onChange={handleInputChange} required className={inputClass} />
+            {!formData.data ? (
+              <div className="p-3 bg-gray-50 border border-gray-200 rounded text-sm text-gray-600">Selecione a data para ver os horários disponíveis.</div>
+            ) : slotsDisponiveis.length === 0 ? (
+              <div className="p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">Nenhum horário disponível para esta data e duração.</div>
+            ) : (
+              <div className="grid grid-cols-3 gap-2">
+                {slotsDisponiveis.map(h => (
+                  <button
+                    type="button"
+                    key={h}
+                    onClick={() => setFormData(prev => ({ ...prev, horario: h }))}
+                    className={`px-2 py-2 rounded border text-sm ${formData.horario===h ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-800 border-gray-300 hover:bg-blue-50'}`}
+                  >
+                    {h}
+                  </button>
+                ))}
+              </div>
+            )}
+            {/* input oculto para validação nativa do form */}
+            <input type="hidden" name="horario" value={formData.horario} required readOnly />
           </div>
 
           <div>
