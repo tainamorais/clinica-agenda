@@ -128,6 +128,28 @@ export default function Home() {
             </div>
           </Link>
 
+          {/* Financeiro */}
+          <Link href="/financeiro">
+            <div className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-all">
+              <div className="flex items-center space-x-4">
+                <div className="bg-emerald-100 p-3 rounded-full">
+                  <span className="text-2xl">💰</span>
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-lg font-semibold text-gray-800">
+                    Financeiro
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    Resumo de faturamento e pendências
+                  </p>
+                </div>
+                <div className="text-gray-400">
+                  <span className="text-xl">→</span>
+                </div>
+              </div>
+            </div>
+          </Link>
+
           {/* Buscar Paciente */}
           <Link href="/buscar-paciente">
             <div className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-all">
