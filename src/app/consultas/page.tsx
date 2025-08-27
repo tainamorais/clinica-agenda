@@ -339,6 +339,35 @@ export default function ConsultasPorData() {
     }
   };
 
+  // Ações de UI que consideram fim de semana sem duplicidade de botões
+  const desbloquearDiaUI = async () => {
+    // Se for fim de semana bloqueado por padrão (sem registro em tabela), apenas ativa override local
+    if (isWeekendDay && !temBloqueioDia && !weekendOverride) {
+      try {
+        const key = `weekend_unlocked_${dataSelecionada}`;
+        localStorage.setItem(key, 'true');
+        setWeekendOverride(true);
+        await carregarConsultas();
+        return;
+      } catch {}
+    }
+    await desbloquearDia();
+  };
+
+  const bloquearDiaUI = async () => {
+    // Se for fim de semana liberado por override, reativa o bloqueio padrão
+    if (isWeekendDay && weekendOverride && !temBloqueioDia) {
+      try {
+        const key = `weekend_unlocked_${dataSelecionada}`;
+        localStorage.removeItem(key);
+        setWeekendOverride(false);
+        await carregarConsultas();
+        return;
+      } catch {}
+    }
+    await bloquearDia();
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="max-w-md mx-auto">
@@ -388,25 +417,15 @@ export default function ConsultasPorData() {
             })()}
           </div>
 
-          {/* Ações de dia inteiro */}
+          {/* Ações de dia inteiro (sem duplicidade em fins de semana) */}
           <div className="mt-4 flex items-center justify-center gap-3">
-            {isWeekendDay && (
-              <button
-                onClick={() => {
-                  try {
-                    const key = `weekend_unlocked_${dataSelecionada}`;
-                    const next = !weekendOverride;
-                    localStorage.setItem(key, String(next));
-                    setWeekendOverride(next);
-                  } catch {}
-                }}
-                className="px-3 py-2 text-sm bg-purple-600 text-white rounded hover:bg-purple-700"
-              >{weekendOverride ? 'Reaplicar bloqueio de fim de semana' : 'Desbloquear fim de semana (exceção)'}</button>
+            {isWeekendDay && !weekendOverride && (
+              <span className="px-3 py-2 text-sm bg-yellow-100 text-yellow-800 rounded border border-yellow-300">Fim de semana (bloqueado por padrão)</span>
             )}
-            {!temBloqueioDia ? (
-              <button onClick={bloquearDia} className="px-3 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700">Bloquear dia inteiro</button>
+            {(temBloqueioDia || (isWeekendDay && !weekendOverride)) ? (
+              <button onClick={desbloquearDiaUI} className="px-3 py-2 text-sm bg-gray-200 text-gray-800 rounded hover:bg-gray-300">Desbloquear dia inteiro</button>
             ) : (
-              <button onClick={desbloquearDia} className="px-3 py-2 text-sm bg-gray-200 text-gray-800 rounded hover:bg-gray-300">Desbloquear dia inteiro</button>
+              <button onClick={bloquearDiaUI} className="px-3 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700">Bloquear dia inteiro</button>
             )}
           </div>
         </div>

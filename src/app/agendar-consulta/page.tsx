@@ -50,6 +50,7 @@ function AgendarConsultaInner() {
   const [consultasDoDia, setConsultasDoDia] = useState<Array<{horario: string; duration_minutos?: number}>>([]);
   const [bloqueiosDoDia, setBloqueiosDoDia] = useState<Array<{hora_inicio: string|null; hora_fim: string|null}>>([]);
   const [slotsDisponiveis, setSlotsDisponiveis] = useState<string[]>([]);
+  const [weekendOverride, setWeekendOverride] = useState<boolean>(false);
 
   const [pacienteSelecionado, setPacienteSelecionado] = useState<Paciente | null>(null);
   const [mensagem, setMensagem] = useState('');
@@ -121,8 +122,15 @@ function AgendarConsultaInner() {
       if (!formData.data) {
         setConsultasDoDia([]);
         setBloqueiosDoDia([]);
+        setWeekendOverride(false);
         return;
       }
+      // weekend override
+      try {
+        const key = `weekend_unlocked_${formData.data}`;
+        const v = typeof window !== 'undefined' ? localStorage.getItem(key) : null;
+        setWeekendOverride(v === 'true');
+      } catch {}
       try {
         if (isSupabaseConfigured) {
           const [{ data: cons }, { data: blq }] = await Promise.all([
@@ -156,7 +164,13 @@ function AgendarConsultaInner() {
     const DAY_END = 21 * 60; // limite de término
 
     // Dia bloqueado?
-    const diaBloqueado = bloqueiosDoDia.some(b => b.hora_inicio == null && b.hora_fim == null);
+    const isWeekend = (() => {
+      if (!formData.data) return false;
+      const d = new Date(`${formData.data}T00:00:00`);
+      const wd = d.getDay();
+      return wd === 0 || wd === 6;
+    })();
+    const diaBloqueado = bloqueiosDoDia.some(b => b.hora_inicio == null && b.hora_fim == null) || (isWeekend && !weekendOverride);
     if (!formData.data || diaBloqueado) {
       setSlotsDisponiveis([]);
       return;
