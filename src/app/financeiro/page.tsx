@@ -240,26 +240,26 @@ export default function FinanceiroPage() {
             <div className="text-sm text-gray-600">Nenhuma consulta no período.</div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
+              <table className="min-w-full text-sm table-auto">
                 <thead>
-                  <tr className="text-left text-gray-600">
-                    <th className="py-2 pr-4">Data</th>
-                    <th className="py-2 pr-4">Horário</th>
+                  <tr className="text-left text-gray-800">
+                    <th className="py-2 pr-4 whitespace-nowrap">Data</th>
+                    <th className="py-2 pr-4 whitespace-nowrap">Horário</th>
                     <th className="py-2 pr-4">Paciente</th>
-                    <th className="py-2 pr-4">Valor</th>
-                    <th className="py-2 pr-4">Status</th>
-                    <th className="py-2 pr-4 text-right">Ações</th>
+                    <th className="py-2 pr-4 text-right whitespace-nowrap">Valor</th>
+                    <th className="py-2 pr-4 whitespace-nowrap">Status</th>
+                    <th className="py-2 pr-4 text-right whitespace-nowrap">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
                   {consultas.map((c) => (
-                    <tr key={c.id} className="border-t">
-                      <td className="py-2 pr-4">{formatISOToBR(c.data)}</td>
-                      <td className="py-2 pr-4">{c.horario}</td>
-                      <td className="py-2 pr-4">{c.pacientes?.nome}</td>
-                      <td className="py-2 pr-4">R$ {getValorConsulta(c.pacientes).toFixed(2)}</td>
-                      <td className="py-2 pr-4">{c.ja_pagou ? <span className="text-green-700 font-medium">Pago</span> : <span className="text-red-700 font-medium">Pendente</span>}</td>
-                      <td className="py-2 pr-4 text-right">
+                    <tr key={c.id} className="border-t align-middle">
+                      <td className="py-2 pr-4 text-gray-800 whitespace-nowrap">{formatISOToBR(c.data)}</td>
+                      <td className="py-2 pr-4 text-gray-800 whitespace-nowrap">{c.horario}</td>
+                      <td className="py-2 pr-4 text-gray-800 max-w-[220px] md:max-w-[320px] truncate" title={c.pacientes?.nome || ''}>{c.pacientes?.nome}</td>
+                      <td className="py-2 pr-4 text-gray-900 whitespace-nowrap text-right">R$ {getValorConsulta(c.pacientes).toFixed(2)}</td>
+                      <td className="py-2 pr-4 whitespace-nowrap">{c.ja_pagou ? <span className="text-green-700 font-medium">Pago</span> : <span className="text-red-700 font-medium">Pendente</span>}</td>
+                      <td className="py-2 pr-0 text-right whitespace-nowrap">
                         {c.ja_pagou ? (
                           <button onClick={() => marcarPago(c.id, false)} className="px-2 py-1 text-xs rounded bg-gray-200 text-gray-800 hover:bg-gray-300">Marcar como Não Pago</button>
                         ) : (
@@ -281,28 +281,28 @@ export default function FinanceiroPage() {
             <div className="text-sm text-gray-600">Sem dados no período.</div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
+              <table className="min-w-full text-sm table-auto">
                 <thead>
-                  <tr className="text-left text-gray-600">
+                  <tr className="text-left text-gray-800">
                     <th className="py-2 pr-4">Paciente</th>
-                    <th className="py-2 pr-4">Consultas</th>
-                    <th className="py-2 pr-4">Pagas</th>
-                    <th className="py-2 pr-4">Pendentes</th>
-                    <th className="py-2 pr-4">Esperado</th>
-                    <th className="py-2 pr-4">Recebido</th>
-                    <th className="py-2 pr-4">Em aberto</th>
+                    <th className="py-2 pr-4 text-right whitespace-nowrap">Consultas</th>
+                    <th className="py-2 pr-4 text-right whitespace-nowrap">Pagas</th>
+                    <th className="py-2 pr-4 text-right whitespace-nowrap">Pendentes</th>
+                    <th className="py-2 pr-4 text-right whitespace-nowrap">Esperado</th>
+                    <th className="py-2 pr-4 text-right whitespace-nowrap">Recebido</th>
+                    <th className="py-2 pr-4 text-right whitespace-nowrap">Em aberto</th>
                   </tr>
                 </thead>
                 <tbody>
                   {porPaciente.map((r) => (
-                    <tr key={r.paciente.id} className="border-t">
-                      <td className="py-2 pr-4">{r.paciente.nome}</td>
-                      <td className="py-2 pr-4">{r.qtd}</td>
-                      <td className="py-2 pr-4 text-green-700">{r.pagas}</td>
-                      <td className="py-2 pr-4 text-red-700">{r.pendentes}</td>
-                      <td className="py-2 pr-4">R$ {r.esperado.toFixed(2)}</td>
-                      <td className="py-2 pr-4 text-green-700">R$ {r.recebido.toFixed(2)}</td>
-                      <td className="py-2 pr-4 text-red-700">R$ {r.pendente.toFixed(2)}</td>
+                    <tr key={r.paciente.id} className="border-t align-middle">
+                      <td className="py-2 pr-4 text-gray-800 max-w-[220px] md:max-w-[260px] truncate" title={r.paciente.nome}>{r.paciente.nome}</td>
+                      <td className="py-2 pr-4 text-right text-gray-800 whitespace-nowrap">{r.qtd}</td>
+                      <td className="py-2 pr-4 text-right text-green-700 whitespace-nowrap">{r.pagas}</td>
+                      <td className="py-2 pr-4 text-right text-red-700 whitespace-nowrap">{r.pendentes}</td>
+                      <td className="py-2 pr-4 text-right text-gray-900 whitespace-nowrap">R$ {r.esperado.toFixed(2)}</td>
+                      <td className="py-2 pr-4 text-right text-green-700 whitespace-nowrap">R$ {r.recebido.toFixed(2)}</td>
+                      <td className="py-2 pr-4 text-right text-red-700 whitespace-nowrap">R$ {r.pendente.toFixed(2)}</td>
                     </tr>
                   ))}
                 </tbody>
