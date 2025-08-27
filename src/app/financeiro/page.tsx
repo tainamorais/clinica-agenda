@@ -168,7 +168,7 @@ export default function FinanceiroPage() {
     }
   };
 
-  const inputClass = "px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900";
+  const inputClass = "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900";
 
   return (
     <div className="min-h-screen bg-gray-100 p-4">
@@ -179,7 +179,7 @@ export default function FinanceiroPage() {
             <h1 className="text-xl font-bold text-gray-800">Financeiro</h1>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label className="text-sm text-gray-700">Início</label>
               <input type="date" value={inicio} onChange={e => setInicio(e.target.value)} className={inputClass} />
