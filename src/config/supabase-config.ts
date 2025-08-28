@@ -59,6 +59,8 @@ export interface Consulta {
   horario: string;
   tipo_consulta: string;
   ja_pagou: boolean;
+  pagador_nome?: string | null;
+  nf_emitida?: boolean | null;
   observacoes: string;
   data_agendamento: string;
   created_at: string;

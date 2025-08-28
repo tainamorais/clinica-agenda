@@ -248,6 +248,8 @@ export default function FinanceiroPage() {
                     <th className="py-2 pr-4">Paciente</th>
                     <th className="py-2 pr-4 text-right whitespace-nowrap">Valor</th>
                     <th className="py-2 pr-4 whitespace-nowrap">Status</th>
+                    <th className="py-2 pr-4">Pagador</th>
+                    <th className="py-2 pr-4 whitespace-nowrap">NF</th>
                     <th className="py-2 pr-4 text-right whitespace-nowrap">Ações</th>
                   </tr>
                 </thead>
@@ -259,12 +261,15 @@ export default function FinanceiroPage() {
                       <td className="py-2 pr-4 text-gray-800 max-w-[220px] md:max-w-[320px] truncate" title={c.pacientes?.nome || ''}>{c.pacientes?.nome}</td>
                       <td className="py-2 pr-4 text-gray-900 whitespace-nowrap text-right">R$ {getValorConsulta(c.pacientes).toFixed(2)}</td>
                       <td className="py-2 pr-4 whitespace-nowrap">{c.ja_pagou ? <span className="text-green-700 font-medium">Pago</span> : <span className="text-red-700 font-medium">Pendente</span>}</td>
+                      <td className="py-2 pr-4 max-w-[220px] truncate" title={c.pagador_nome || ''}>{c.pagador_nome || '-'}</td>
+                      <td className="py-2 pr-4 whitespace-nowrap">{c.nf_emitida ? <span className="text-green-700">Emitida</span> : <span className="text-gray-600">Não</span>}</td>
                       <td className="py-2 pr-0 text-right whitespace-nowrap">
                         {c.ja_pagou ? (
                           <button onClick={() => marcarPago(c.id, false)} className="px-2 py-1 text-xs rounded bg-gray-200 text-gray-800 hover:bg-gray-300">Marcar como Não Pago</button>
                         ) : (
                           <button onClick={() => marcarPago(c.id, true)} className="px-2 py-1 text-xs rounded bg-green-600 text-white hover:bg-green-700">Marcar como Pago</button>
                         )}
+                        <button onClick={() => marcarNF(c.id, !c.nf_emitida)} className="ml-2 px-2 py-1 text-xs rounded bg-indigo-600 text-white hover:bg-indigo-700">{c.nf_emitida ? 'Desmarcar NF' : 'Marcar NF'}</button>
                       </td>
                     </tr>
                   ))}

@@ -104,18 +104,19 @@ export default function ConsultasPorData() {
   };
 
   const marcarComoPaga = async (consultaId: number) => {
+    const nomePagador = prompt('Quem efetuou o pagamento? (nome completo)') || '';
     try {
       if (isSupabaseConfigured) {
         const { error } = await supabase
           .from('consultas')
-          .update({ ja_pagou: true })
+          .update({ ja_pagou: true, pagador_nome: nomePagador || null })
           .eq('id', consultaId);
         if (error) throw error;
         await carregarConsultas();
         return;
       }
       const consultasSalvas: Consulta[] = isLocalCacheEnabled ? JSON.parse(localStorage.getItem('consultas') || '[]') : [];
-      const atualizadas = consultasSalvas.map(c => (c.id === consultaId ? { ...c, jaPagou: true } : c));
+      const atualizadas = consultasSalvas.map(c => (c.id === consultaId ? { ...c, jaPagou: true, pagador_nome: nomePagador || null } : c));
       if (isLocalCacheEnabled) localStorage.setItem('consultas', JSON.stringify(atualizadas));
       await carregarConsultas();
     } catch (e) {
