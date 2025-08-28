@@ -154,12 +154,21 @@ export default function FinanceiroPage() {
 
   const marcarPago = async (id: number, novo: boolean) => {
     try {
+      let nomePagador = null;
+      if (novo) {
+        nomePagador = prompt('Quem efetuou o pagamento? (nome completo)');
+        if (!nomePagador) return; // Cancelou
+      }
+
       if (isSupabaseConfigured) {
-        const { error } = await supabase.from('consultas').update({ ja_pagou: novo }).eq('id', id);
+        const updateData = novo 
+          ? { ja_pagou: novo, pagador_nome: nomePagador }
+          : { ja_pagou: novo, pagador_nome: null };
+        const { error } = await supabase.from('consultas').update(updateData as any).eq('id', id);
         if (error) throw error;
       } else if (isLocalCacheEnabled) {
         const todas = JSON.parse(localStorage.getItem('consultas') || '[]');
-        const atual = (todas as any[]).map(c => c.id === id ? { ...c, jaPagou: novo } : c);
+        const atual = (todas as any[]).map(c => c.id === id ? { ...c, jaPagou: novo, pagador_nome: novo ? nomePagador : null } : c);
         localStorage.setItem('consultas', JSON.stringify(atual));
       }
       await carregarConsultas();
@@ -263,8 +272,7 @@ export default function FinanceiroPage() {
                     <th className="py-2 pr-4 whitespace-nowrap">Horário</th>
                     <th className="py-2 pr-4">Paciente</th>
                     <th className="py-2 pr-4 text-right whitespace-nowrap">Valor</th>
-                    <th className="py-2 pr-4 whitespace-nowrap">Status</th>
-                    <th className="py-2 pr-4">Pagador</th>
+                    <th className="py-2 pr-4 whitespace-nowrap">Pagamento</th>
                     <th className="py-2 pr-4 whitespace-nowrap">NF</th>
                     <th className="py-2 pr-4 text-right whitespace-nowrap">Ações</th>
                   </tr>
@@ -276,16 +284,38 @@ export default function FinanceiroPage() {
                       <td className="py-2 pr-4 text-gray-800 whitespace-nowrap">{c.horario}</td>
                       <td className="py-2 pr-4 text-gray-800 max-w-[220px] md:max-w-[320px] truncate" title={c.pacientes?.nome || ''}>{c.pacientes?.nome}</td>
                       <td className="py-2 pr-4 text-gray-900 whitespace-nowrap text-right">R$ {getValorConsulta(c.pacientes).toFixed(2)}</td>
-                      <td className="py-2 pr-4 whitespace-nowrap">{c.ja_pagou ? <span className="text-green-700 font-medium">Pago</span> : <span className="text-red-700 font-medium">Pendente</span>}</td>
-                      <td className="py-2 pr-4 max-w-[220px] truncate" title={(c as any).pagador_nome || ''}>{(c as any).pagador_nome || '-'}</td>
-                      <td className="py-2 pr-4 whitespace-nowrap">{(c as any).nf_emitida ? <span className="text-green-700">Emitida</span> : <span className="text-gray-600">Não</span>}</td>
-                      <td className="py-2 pr-0 text-right whitespace-nowrap">
+                      <td className="py-2 pr-4 whitespace-nowrap">
                         {c.ja_pagou ? (
-                          <button onClick={() => marcarPago(c.id, false)} className="px-2 py-1 text-xs rounded bg-gray-200 text-gray-800 hover:bg-gray-300">Marcar como Não Pago</button>
+                          <span className="text-green-700 font-medium" title={(c as any).pagador_nome ? `Pago por: ${(c as any).pagador_nome}` : 'Pago'}>
+                            Pago
+                          </span>
                         ) : (
-                          <button onClick={() => marcarPago(c.id, true)} className="px-2 py-1 text-xs rounded bg-green-600 text-white hover:bg-green-700">Marcar como Pago</button>
+                          <span className="text-red-700 font-medium">Pendente</span>
                         )}
-                        <button onClick={() => marcarNF(c.id, !(c as any).nf_emitida)} className="ml-2 px-2 py-1 text-xs rounded bg-indigo-600 text-white hover:bg-indigo-700">{(c as any).nf_emitida ? 'Desmarcar NF' : 'Marcar NF'}</button>
+                      </td>
+                      <td className="py-2 pr-4 whitespace-nowrap">
+                        <button
+                          onClick={() => marcarNF(c.id, !(c as any).nf_emitida)}
+                          className={`px-3 py-1 text-xs rounded font-medium ${
+                            (c as any).nf_emitida 
+                              ? 'bg-green-100 text-green-800 hover:bg-green-200' 
+                              : 'bg-red-100 text-red-800 hover:bg-red-200'
+                          }`}
+                        >
+                          {(c as any).nf_emitida ? 'Emitida' : 'Pendente'}
+                        </button>
+                      </td>
+                      <td className="py-2 pr-0 text-right whitespace-nowrap">
+                        <button 
+                          onClick={() => marcarPago(c.id, !c.ja_pagou)} 
+                          className={`px-2 py-1 text-xs rounded ${
+                            c.ja_pagou 
+                              ? 'bg-gray-200 text-gray-800 hover:bg-gray-300' 
+                              : 'bg-green-600 text-white hover:bg-green-700'
+                          }`}
+                        >
+                          {c.ja_pagou ? 'Marcar Não Pago' : 'Marcar Pago'}
+                        </button>
                       </td>
                     </tr>
                   ))}
