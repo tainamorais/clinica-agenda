@@ -75,7 +75,7 @@ export default function FinanceiroPage() {
       if (isSupabaseConfigured) {
         let query = supabase
           .from('consultas')
-          .select('id, data, horario, tipo_consulta, ja_pagou, pacientes(*)')
+          .select('id, data, horario, tipo_consulta, ja_pagou, pagador_nome, nf_emitida, pacientes(*)')
           .gte('data', inicio)
           .lte('data', fim)
           .order('data', { ascending: true })
