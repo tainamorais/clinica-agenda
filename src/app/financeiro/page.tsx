@@ -274,7 +274,6 @@ export default function FinanceiroPage() {
                     <th className="py-2 pr-4 text-right whitespace-nowrap">Valor</th>
                     <th className="py-2 pr-4 whitespace-nowrap">Pagamento</th>
                     <th className="py-2 pr-4 whitespace-nowrap">NF</th>
-                    <th className="py-2 pr-4 text-right whitespace-nowrap">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -285,36 +284,32 @@ export default function FinanceiroPage() {
                       <td className="py-2 pr-4 text-gray-800 max-w-[220px] md:max-w-[320px] truncate" title={c.pacientes?.nome || ''}>{c.pacientes?.nome}</td>
                       <td className="py-2 pr-4 text-gray-900 whitespace-nowrap text-right">R$ {getValorConsulta(c.pacientes).toFixed(2)}</td>
                       <td className="py-2 pr-4 whitespace-nowrap">
-                        {c.ja_pagou ? (
-                          <span className="text-green-700 font-medium" title={(c as any).pagador_nome ? `Pago por: ${(c as any).pagador_nome}` : 'Pago'}>
-                            Pago
-                          </span>
-                        ) : (
-                          <span className="text-red-700 font-medium">Pendente</span>
-                        )}
+                        <button
+                          onClick={() => marcarPago(c.id, !c.ja_pagou)}
+                          className={`px-3 py-1 text-xs rounded font-medium w-full text-left ${
+                            c.ja_pagou 
+                              ? 'bg-green-100 text-green-800 hover:bg-green-200' 
+                              : 'bg-red-100 text-red-800 hover:bg-red-200'
+                          }`}
+                        >
+                          <div>{c.ja_pagou ? 'Pago' : 'Pendente'}</div>
+                          {c.ja_pagou && (c as any).pagador_nome && (
+                            <div className="text-xs text-green-600 truncate mt-1">
+                              por: {(c as any).pagador_nome}
+                            </div>
+                          )}
+                        </button>
                       </td>
                       <td className="py-2 pr-4 whitespace-nowrap">
                         <button
                           onClick={() => marcarNF(c.id, !(c as any).nf_emitida)}
-                          className={`px-3 py-1 text-xs rounded font-medium ${
+                          className={`px-3 py-1 text-xs rounded font-medium w-full ${
                             (c as any).nf_emitida 
                               ? 'bg-green-100 text-green-800 hover:bg-green-200' 
                               : 'bg-red-100 text-red-800 hover:bg-red-200'
                           }`}
                         >
                           {(c as any).nf_emitida ? 'Emitida' : 'Pendente'}
-                        </button>
-                      </td>
-                      <td className="py-2 pr-0 text-right whitespace-nowrap">
-                        <button 
-                          onClick={() => marcarPago(c.id, !c.ja_pagou)} 
-                          className={`px-2 py-1 text-xs rounded ${
-                            c.ja_pagou 
-                              ? 'bg-gray-200 text-gray-800 hover:bg-gray-300' 
-                              : 'bg-green-600 text-white hover:bg-green-700'
-                          }`}
-                        >
-                          {c.ja_pagou ? 'Marcar Não Pago' : 'Marcar Pago'}
                         </button>
                       </td>
                     </tr>
