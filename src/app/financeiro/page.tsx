@@ -96,7 +96,7 @@ export default function FinanceiroPage() {
         const { data, error } = await query;
         if (error) throw error;
         
-        let consultasData = (data as any[]) || [];
+        const consultasData = (data as any[]) || [];
         
         // Ordenação
         consultasData.sort((a, b) => {
