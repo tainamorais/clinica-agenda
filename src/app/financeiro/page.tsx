@@ -22,7 +22,10 @@ interface ConsultaRow {
   pacientes: Paciente;
 }
 
-type StatusFiltro = 'todas' | 'pagas' | 'pendentes';
+type StatusPagamento = 'todos' | 'pagas' | 'pendentes';
+type StatusNF = 'todos' | 'emitidas' | 'pendentes';
+type OrdenacaoTipo = 'data' | 'paciente' | 'pagador';
+type OrdenacaoDirecao = 'asc' | 'desc';
 
 const getValorConsulta = (p?: Paciente) => {
   if (!p) return 0;
@@ -42,7 +45,11 @@ export default function FinanceiroPage() {
   const [inicio, setInicio] = useState<string>(primeiroDoMes);
   const [fim, setFim] = useState<string>(ultimoDoMes);
   const [pacienteId, setPacienteId] = useState<string>('');
-  const [status, setStatus] = useState<StatusFiltro>('todas');
+  const [statusPagamento, setStatusPagamento] = useState<StatusPagamento>('todos');
+  const [statusNF, setStatusNF] = useState<StatusNF>('todos');
+  const [buscaPagador, setBuscaPagador] = useState<string>('');
+  const [ordenacao, setOrdenacao] = useState<OrdenacaoTipo>('data');
+  const [direcao, setDirecao] = useState<OrdenacaoDirecao>('asc');
 
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [consultas, setConsultas] = useState<ConsultaRow[]>([]);
@@ -81,17 +88,63 @@ export default function FinanceiroPage() {
           .order('data', { ascending: true })
           .order('horario', { ascending: true });
         if (pacienteId) query = query.eq('paciente_id', Number(pacienteId));
-        if (status === 'pagas') query = query.eq('ja_pagou', true);
-        if (status === 'pendentes') query = query.eq('ja_pagou', false);
+        if (statusPagamento === 'pagas') query = query.eq('ja_pagou', true);
+        if (statusPagamento === 'pendentes') query = query.eq('ja_pagou', false);
+        if (statusNF === 'emitidas') query = query.eq('nf_emitida', true);
+        if (statusNF === 'pendentes') query = query.eq('nf_emitida', false);
+        if (buscaPagador.trim()) query = query.ilike('pagador_nome', `%${buscaPagador.trim()}%`);
         const { data, error } = await query;
         if (error) throw error;
-        setConsultas((data as any[]) || []);
+        
+        let consultasData = (data as any[]) || [];
+        
+        // Ordenação
+        consultasData.sort((a, b) => {
+          let aVal, bVal;
+          
+          switch (ordenacao) {
+            case 'data':
+              aVal = new Date(a.data + ' ' + a.horario);
+              bVal = new Date(b.data + ' ' + b.horario);
+              break;
+            case 'paciente':
+              aVal = a.pacientes?.nome || '';
+              bVal = b.pacientes?.nome || '';
+              break;
+            case 'pagador':
+              aVal = a.pagador_nome || '';
+              bVal = b.pagador_nome || '';
+              break;
+            default:
+              aVal = new Date(a.data + ' ' + a.horario);
+              bVal = new Date(b.data + ' ' + b.horario);
+          }
+          
+          if (aVal < bVal) return direcao === 'asc' ? -1 : 1;
+          if (aVal > bVal) return direcao === 'asc' ? 1 : -1;
+          return 0;
+        });
+        
+        setConsultas(consultasData);
       } else if (isLocalCacheEnabled) {
         const todas = JSON.parse(localStorage.getItem('consultas') || '[]');
         const filtradas = (todas as any[])
           .filter(c => c.data >= inicio && c.data <= fim)
           .filter(c => (pacienteId ? String(c.pacienteId || c.paciente_id) === String(pacienteId) : true))
-          .filter(c => (status === 'pagas' ? c.jaPagou : status === 'pendentes' ? !c.jaPagou : true))
+          .filter(c => {
+            if (statusPagamento === 'pagas') return c.jaPagou;
+            if (statusPagamento === 'pendentes') return !c.jaPagou;
+            return true;
+          })
+          .filter(c => {
+            if (statusNF === 'emitidas') return c.nf_emitida;
+            if (statusNF === 'pendentes') return !c.nf_emitida;
+            return true;
+          })
+          .filter(c => {
+            if (!buscaPagador.trim()) return true;
+            return (c.pagador_nome || '').toLowerCase().includes(buscaPagador.trim().toLowerCase());
+          })
           .map(c => ({
             id: c.id,
             data: c.data,
@@ -100,6 +153,34 @@ export default function FinanceiroPage() {
             ja_pagou: c.jaPagou ?? c.ja_pagou,
             pacientes: c.paciente,
           }));
+        
+        // Ordenação para localStorage
+        filtradas.sort((a, b) => {
+          let aVal, bVal;
+          
+          switch (ordenacao) {
+            case 'data':
+              aVal = new Date(a.data + ' ' + a.horario);
+              bVal = new Date(b.data + ' ' + b.horario);
+              break;
+            case 'paciente':
+              aVal = a.pacientes?.nome || '';
+              bVal = b.pacientes?.nome || '';
+              break;
+            case 'pagador':
+              aVal = (a as any).pagador_nome || '';
+              bVal = (b as any).pagador_nome || '';
+              break;
+            default:
+              aVal = new Date(a.data + ' ' + a.horario);
+              bVal = new Date(b.data + ' ' + b.horario);
+          }
+          
+          if (aVal < bVal) return direcao === 'asc' ? -1 : 1;
+          if (aVal > bVal) return direcao === 'asc' ? 1 : -1;
+          return 0;
+        });
+        
         setConsultas(filtradas);
       } else {
         setConsultas([]);
@@ -115,7 +196,7 @@ export default function FinanceiroPage() {
 
   useEffect(() => {
     carregarConsultas();
-  }, [inicio, fim, pacienteId, status]);
+  }, [inicio, fim, pacienteId, statusPagamento, statusNF, buscaPagador, ordenacao, direcao]);
 
   const resumo = useMemo(() => {
     const linhas = consultas.map(c => ({
@@ -194,6 +275,15 @@ export default function FinanceiroPage() {
   };
 
   const inputClass = "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900";
+  
+  const alterarOrdenacao = (campo: OrdenacaoTipo) => {
+    if (ordenacao === campo) {
+      setDirecao(direcao === 'asc' ? 'desc' : 'asc');
+    } else {
+      setOrdenacao(campo);
+      setDirecao('asc');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 p-4">
@@ -204,7 +294,7 @@ export default function FinanceiroPage() {
             <h1 className="text-xl font-bold text-gray-800">Financeiro</h1>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
             <div>
               <label className="text-sm text-gray-700">Início</label>
               <input type="date" value={inicio} onChange={e => setInicio(e.target.value)} className={inputClass} />
@@ -222,13 +312,34 @@ export default function FinanceiroPage() {
                 ))}
               </select>
             </div>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
-              <label className="text-sm text-gray-700">Status</label>
-              <select value={status} onChange={e => setStatus(e.target.value as StatusFiltro)} className={inputClass}>
-                <option value="todas">Todas</option>
+              <label className="text-sm text-gray-700">Status Pagamento</label>
+              <select value={statusPagamento} onChange={e => setStatusPagamento(e.target.value as StatusPagamento)} className={inputClass}>
+                <option value="todos">Todos</option>
                 <option value="pagas">Pagas</option>
                 <option value="pendentes">Pendentes</option>
               </select>
+            </div>
+            <div>
+              <label className="text-sm text-gray-700">Status NF</label>
+              <select value={statusNF} onChange={e => setStatusNF(e.target.value as StatusNF)} className={inputClass}>
+                <option value="todos">Todos</option>
+                <option value="emitidas">Emitidas</option>
+                <option value="pendentes">Pendentes</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm text-gray-700">Buscar Pagador</label>
+              <input 
+                type="text" 
+                placeholder="Nome do pagador..." 
+                value={buscaPagador} 
+                onChange={e => setBuscaPagador(e.target.value)} 
+                className={inputClass} 
+              />
             </div>
           </div>
         </div>
@@ -268,11 +379,26 @@ export default function FinanceiroPage() {
               <table className="min-w-full text-sm table-auto">
                 <thead>
                   <tr className="text-left text-gray-800">
-                    <th className="py-2 pr-4 whitespace-nowrap">Data</th>
+                    <th 
+                      className="py-2 pr-4 whitespace-nowrap cursor-pointer hover:bg-gray-50 select-none" 
+                      onClick={() => alterarOrdenacao('data')}
+                    >
+                      Data {ordenacao === 'data' && (direcao === 'asc' ? '↑' : '↓')}
+                    </th>
                     <th className="py-2 pr-4 whitespace-nowrap">Horário</th>
-                    <th className="py-2 pr-4">Paciente</th>
+                    <th 
+                      className="py-2 pr-4 cursor-pointer hover:bg-gray-50 select-none" 
+                      onClick={() => alterarOrdenacao('paciente')}
+                    >
+                      Paciente {ordenacao === 'paciente' && (direcao === 'asc' ? '↑' : '↓')}
+                    </th>
                     <th className="py-2 pr-4 text-right whitespace-nowrap">Valor</th>
-                    <th className="py-2 pr-4 whitespace-nowrap">Pagamento</th>
+                    <th 
+                      className="py-2 pr-4 whitespace-nowrap cursor-pointer hover:bg-gray-50 select-none" 
+                      onClick={() => alterarOrdenacao('pagador')}
+                    >
+                      Pagamento {ordenacao === 'pagador' && (direcao === 'asc' ? '↑' : '↓')}
+                    </th>
                     <th className="py-2 pr-4 whitespace-nowrap">NF</th>
                   </tr>
                 </thead>
