@@ -43,6 +43,7 @@ function AgendarConsultaInner() {
     data: '',
     horario: '',
     tipoConsulta: 'primeira',
+    modalidade: 'presencial_b',
     jaPagou: false,
     observacoes: ''
   });
@@ -303,10 +304,15 @@ function AgendarConsultaInner() {
     setFormData(prev => ({ ...prev, pacienteId }));
     const paciente = pacientes.find(p => p.id === parseInt(pacienteId));
     setPacienteSelecionado(paciente || null);
+    // Prefill modalidade conforme cadastro (se houver)
+    try {
+      const preferida = (paciente as any)?.modalidade_preferida || (paciente as any)?.modalidadePreferida;
+      if (preferida) setFormData(prev => ({ ...prev, modalidade: preferida }));
+    } catch {}
   };
 
   const limparFormulario = () => {
-    setFormData({ pacienteId: '', data: '', horario: '', tipoConsulta: 'primeira', jaPagou: false, observacoes: '' });
+    setFormData({ pacienteId: '', data: '', horario: '', tipoConsulta: 'primeira', modalidade: 'presencial_b', jaPagou: false, observacoes: '' });
     setPacienteSelecionado(null);
   };
 
@@ -405,6 +411,15 @@ function AgendarConsultaInner() {
               <option value={60}>1 hora (padrão)</option>
               <option value={120}>2 horas</option>
               <option value={30}>30 minutos (exceção)</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Modalidade da Consulta</label>
+            <select name="modalidade" value={formData.modalidade} onChange={handleInputChange} className={selectClass}>
+              <option value="presencial_b">Presencial B</option>
+              <option value="presencial_zs">Presencial ZS</option>
+              <option value="online">Online</option>
             </select>
           </div>
 

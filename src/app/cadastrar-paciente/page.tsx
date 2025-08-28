@@ -12,6 +12,7 @@ export default function CadastrarPaciente() {
     dataNascimento: '',
     cpf: '',
     valorConsulta: '',
+    modalidadePreferida: 'presencial_b',
     nomeRepresentante: '',
     telefoneRepresentante: '',
     temRepresentante: false
@@ -102,6 +103,7 @@ export default function CadastrarPaciente() {
       data_nascimento: formData.dataNascimento,
       cpf: formData.cpf.trim(),
       valor_consulta: parseFloat(formData.valorConsulta),
+      modalidade_preferida: formData.modalidadePreferida as any,
       nome_representante: formData.nomeRepresentante.trim(),
       telefone_representante: formData.telefoneRepresentante.trim(),
       tem_representante: formData.temRepresentante
@@ -131,7 +133,8 @@ export default function CadastrarPaciente() {
       }
     } catch (_) {}
 
-    if (await salvarPaciente(pacienteData)) {
+    const payloadForSave = isSupabaseConfigured ? (({ modalidade_preferida, ...rest }: any) => rest)(pacienteData) : pacienteData;
+    if (await salvarPaciente(payloadForSave as any)) {
       mostrarMensagem(isSupabaseConfigured ? 'Paciente cadastrado na nuvem!' : 'Paciente salvo neste dispositivo para teste!', 'sucesso');
       limparFormulario();
     } else {
@@ -158,6 +161,7 @@ export default function CadastrarPaciente() {
       dataNascimento: '',
       cpf: '',
       valorConsulta: '',
+      modalidadePreferida: 'presencial_b',
       nomeRepresentante: '',
       telefoneRepresentante: '',
       temRepresentante: false
@@ -171,6 +175,7 @@ export default function CadastrarPaciente() {
   };
 
   const inputClass = "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500";
+  const selectClass = inputClass;
 
   return (
     <div className="min-h-screen bg-gray-100 p-4">
@@ -223,6 +228,20 @@ export default function CadastrarPaciente() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Valor da Consulta *</label>
             <input type="number" name="valorConsulta" value={formData.valorConsulta} onChange={handleInputChange} required step="0.01" min="0" className={inputClass} placeholder="0,00" />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Modalidade Preferida *</label>
+            <select
+              name="modalidadePreferida"
+              value={formData.modalidadePreferida}
+              onChange={(e) => setFormData(prev => ({ ...prev, modalidadePreferida: e.target.value }))}
+              className={selectClass}
+            >
+              <option value="presencial_b">Presencial B</option>
+              <option value="presencial_zs">Presencial ZS</option>
+              <option value="online">Online</option>
+            </select>
           </div>
 
           <div className="border-t pt-4">

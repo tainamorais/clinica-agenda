@@ -44,6 +44,7 @@ export interface Paciente {
   data_nascimento: string;
   cpf: string;
   valor_consulta: number;
+  modalidade_preferida?: 'presencial_b' | 'presencial_zs' | 'online';
   nome_representante: string;
   telefone_representante: string;
   tem_representante: boolean;
@@ -65,6 +66,7 @@ export interface Consulta {
   medicacoes?: string; // texto livre (um por linha)
   resumo?: string; // resumo do atendimento
   duration_minutos?: number; // duração da consulta (minutos)
+  modalidade?: 'presencial_b' | 'presencial_zs' | 'online';
 }
 
 export interface ConsultaComPaciente extends Consulta {
