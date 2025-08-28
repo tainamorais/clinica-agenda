@@ -248,6 +248,7 @@ function AgendarConsultaInner() {
             jaPagou: consulta.jaPagou,
             observacoes: consulta.observacoes,
             duration_minutos: durationMinutos,
+            modalidade: (formData as any).modalidade,
             dataAgendamento: data?.data_agendamento || new Date().toISOString(),
           };
           consultasExistentes.push(novaConsulta);

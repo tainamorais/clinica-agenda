@@ -16,6 +16,7 @@ export default function EditarPaciente({ params }: { params: { id: string } }) {
     dataNascimento: '',
     cpf: '',
     valorConsulta: '',
+    modalidadePreferida: 'presencial_b',
     nomeRepresentante: '',
     telefoneRepresentante: '',
     temRepresentante: false,
@@ -42,6 +43,7 @@ export default function EditarPaciente({ params }: { params: { id: string } }) {
             dataNascimento: data.data_nascimento || '',
             cpf: data.cpf || '',
             valorConsulta: String(data.valor_consulta ?? ''),
+            modalidadePreferida: data.modalidade_preferida || 'presencial_b',
             nomeRepresentante: data.nome_representante || '',
             telefoneRepresentante: data.telefone_representante || '',
             temRepresentante: Boolean(data.tem_representante),
@@ -60,6 +62,7 @@ export default function EditarPaciente({ params }: { params: { id: string } }) {
           dataNascimento: p.dataNascimento || p.data_nascimento || '',
           cpf: p.cpf || '',
           valorConsulta: String(p.valorConsulta ?? p.valor_consulta ?? ''),
+          modalidadePreferida: p.modalidadePreferida || p.modalidade_preferida || 'presencial_b',
           nomeRepresentante: p.nomeRepresentante || p.nome_representante || '',
           telefoneRepresentante: p.telefoneRepresentante || p.telefone_representante || '',
           temRepresentante: Boolean(p.temRepresentante ?? p.tem_representante),
@@ -101,6 +104,7 @@ export default function EditarPaciente({ params }: { params: { id: string } }) {
         data_nascimento: formData.dataNascimento,
         cpf: formData.cpf.trim(),
         valor_consulta: Number(formData.valorConsulta),
+        modalidade_preferida: formData.modalidadePreferida as any,
         nome_representante: formData.nomeRepresentante.trim(),
         telefone_representante: formData.telefoneRepresentante.trim(),
         tem_representante: formData.temRepresentante,
@@ -156,6 +160,7 @@ export default function EditarPaciente({ params }: { params: { id: string } }) {
   };
 
   const inputClass = "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500";
+  const selectClass = inputClass;
 
   return (
     <div className="min-h-screen bg-gray-100 p-4">
@@ -200,6 +205,18 @@ export default function EditarPaciente({ params }: { params: { id: string } }) {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Valor da Consulta *</label>
               <input type="number" step="0.01" min="0" name="valorConsulta" value={formData.valorConsulta} onChange={handleInputChange} className={inputClass} required />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Modalidade Preferida *</label>
+              <select
+                value={formData.modalidadePreferida}
+                onChange={(e) => setFormData(prev => ({ ...prev, modalidadePreferida: e.target.value }))}
+                className={selectClass}
+              >
+                <option value="presencial_b">Presencial B</option>
+                <option value="presencial_zs">Presencial ZS</option>
+                <option value="online">Online</option>
+              </select>
             </div>
             <div className="border-t pt-4">
               <div className="flex items-center space-x-2 mb-4">
