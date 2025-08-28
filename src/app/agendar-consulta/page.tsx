@@ -90,7 +90,8 @@ function AgendarConsultaInner() {
           if (preId) {
             const p = (data as any).find((x: any) => String(x.id) === String(preId));
             if (p) {
-              setFormData(prev => ({ ...prev, pacienteId: String(p.id) }));
+              const preferida = (p as any)?.modalidade_preferida || (p as any)?.modalidadePreferida;
+              setFormData(prev => ({ ...prev, pacienteId: String(p.id), modalidade: preferida || prev.modalidade }));
               setPacienteSelecionado(p as any);
             }
           }
