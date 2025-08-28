@@ -18,6 +18,7 @@ interface Paciente {
   // valor pode vir em ambos formatos
   valorConsulta?: number;
   valor_consulta?: number;
+  modalidade_preferida?: 'presencial_b' | 'presencial_zs' | 'online';
   // representante pode vir em ambos formatos
   nomeRepresentante?: string;
   nome_representante?: string;
@@ -42,6 +43,7 @@ export default function BuscarPaciente() {
   };
   const getDataNascimento = (p: Paciente) => p.dataNascimento || (p as any).data_nascimento || '';
   const getDataCadastro = (p: Paciente) => p.dataCadastro || (p as any).data_cadastro || '';
+  const getModalidadePreferida = (p: Paciente) => (p as any).modalidade_preferida || (p as any).modalidadePreferida || '';
   const hasRepresentante = (p: Paciente) => Boolean((p as any).tem_representante ?? p.temRepresentante);
   const getNomeRepresentante = (p: Paciente) => p.nomeRepresentante || (p as any).nome_representante || '';
   const getTelefoneRepresentante = (p: Paciente) => p.telefoneRepresentante || (p as any).telefone_representante || '';
@@ -244,6 +246,14 @@ export default function BuscarPaciente() {
                   <p><strong>CPF:</strong> {paciente.cpf}</p>
                   <p><strong>Endereço:</strong> {paciente.endereco}</p>
                   <p><strong>Valor Consulta:</strong> R$ {getValorConsulta(paciente).toFixed(2)}</p>
+                  {getModalidadePreferida(paciente) && (
+                    <p>
+                      <strong>Modalidade:</strong>{' '}
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${getModalidadePreferida(paciente)==='online' ? 'bg-indigo-100 text-indigo-800' : getModalidadePreferida(paciente)==='presencial_zs' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'}`}>
+                        {getModalidadePreferida(paciente)==='online' ? 'Online' : getModalidadePreferida(paciente)==='presencial_zs' ? 'Presencial ZS' : 'Presencial B'}
+                      </span>
+                    </p>
+                  )}
                   <p><strong>Data Nascimento:</strong> {formatarData(getDataNascimento(paciente))}</p>
                   <p><strong>Cadastrado em:</strong> {formatarDataCadastro(paciente)}</p>
                   
