@@ -168,6 +168,22 @@ export default function FinanceiroPage() {
     }
   };
 
+  const marcarNF = async (id: number, novo: boolean) => {
+    try {
+      if (isSupabaseConfigured) {
+        const { error } = await supabase.from('consultas').update({ nf_emitida: novo } as any).eq('id', id);
+        if (error) throw error;
+      } else if (isLocalCacheEnabled) {
+        const todas = JSON.parse(localStorage.getItem('consultas') || '[]');
+        const atual = (todas as any[]).map(c => c.id === id ? { ...c, nf_emitida: novo } : c);
+        localStorage.setItem('consultas', JSON.stringify(atual));
+      }
+      await carregarConsultas();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const inputClass = "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900";
 
   return (
