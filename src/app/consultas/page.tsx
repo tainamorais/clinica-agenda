@@ -471,7 +471,6 @@ export default function ConsultasPorData() {
                       <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-600 text-white mr-2">Agendado</span>
                       <span className="flex-1">
                         {s.texto && (<span className="block text-blue-700 font-medium break-words leading-snug">{s.texto}</span>)}
-                        {s.horarioConsulta && (<span className="block text-xs text-gray-600">{s.horarioConsulta}</span>)}
                         {s.modalidade && (
                           <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold mt-1 ${getModalidadeColor(s.modalidade)}`}>
                             {getModalidadeLabel(s.modalidade)}
