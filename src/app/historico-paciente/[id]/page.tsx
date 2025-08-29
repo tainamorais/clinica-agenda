@@ -354,7 +354,7 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
       <div className="max-w-md mx-auto">
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <div className="flex items-center space-x-3 mb-4">
-            <Link href="/" className="text-blue-600 text-xl">←</Link>
+            <Link href="/buscar-paciente" className="text-blue-600 text-xl">←</Link>
             <h1 className="text-xl font-bold text-gray-800">Ficha do Paciente</h1>
           </div>
         </div>
@@ -520,7 +520,7 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
                         
                         <button 
                           onClick={iniciarEdicaoDados}
-                          className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                          className="w-full px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-colors"
                         >
                           Editar Dados Adicionais
                         </button>
@@ -750,7 +750,7 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
             </div>
 
             <div>
-              <Link href="/" className="block w-full px-4 py-3 text-center text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors">Voltar ao Menu</Link>
+              <Link href="/buscar-paciente" className="block w-full px-4 py-3 text-center text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors">Voltar à Busca por Pacientes</Link>
             </div>
           </div>
         )}
