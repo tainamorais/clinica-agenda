@@ -419,8 +419,8 @@ function AgendarConsultaInner() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Modalidade da Consulta</label>
             <select name="modalidade" value={formData.modalidade} onChange={handleInputChange} className={selectClass}>
-              <option value="presencial_b">Presencial B</option>
-              <option value="presencial_zs">Presencial ZS</option>
+              <option value="presencial_b">Presencial Barra</option>
+              <option value="presencial_zs">Presencial Botafogo</option>
               <option value="online">Online</option>
             </select>
           </div>

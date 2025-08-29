@@ -502,8 +502,8 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
                             <div>
                               <strong className="text-gray-700">Modalidade Preferida:</strong>
                               <p className="text-gray-900">
-                                {paciente.modalidade_preferida === 'presencial_b' ? 'Presencial B' :
-                                 paciente.modalidade_preferida === 'presencial_zs' ? 'Presencial ZS' :
+                                {paciente.modalidade_preferida === 'presencial_b' ? 'Presencial Barra' :
+                                 paciente.modalidade_preferida === 'presencial_zs' ? 'Presencial Botafogo' :
                                  paciente.modalidade_preferida === 'online' ? 'Online' : paciente.modalidade_preferida}
                               </p>
                             </div>

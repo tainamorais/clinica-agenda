@@ -250,7 +250,7 @@ export default function BuscarPaciente() {
                     <p>
                       <strong>Modalidade:</strong>{' '}
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${getModalidadePreferida(paciente)==='online' ? 'bg-orange-100 text-orange-800' : getModalidadePreferida(paciente)==='presencial_zs' ? 'bg-pink-100 text-pink-800' : 'bg-purple-100 text-purple-800'}`}>
-                        {getModalidadePreferida(paciente)==='online' ? 'Online' : getModalidadePreferida(paciente)==='presencial_zs' ? 'Presencial ZS' : 'Presencial B'}
+                        {getModalidadePreferida(paciente)==='online' ? 'Online' : getModalidadePreferida(paciente)==='presencial_zs' ? 'Presencial Botafogo' : 'Presencial Barra'}
                       </span>
                     </p>
                   )}

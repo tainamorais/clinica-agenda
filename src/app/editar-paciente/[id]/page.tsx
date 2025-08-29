@@ -213,8 +213,8 @@ export default function EditarPaciente({ params }: { params: { id: string } }) {
                 onChange={(e) => setFormData(prev => ({ ...prev, modalidadePreferida: e.target.value }))}
                 className={selectClass}
               >
-                <option value="presencial_b">Presencial B</option>
-                <option value="presencial_zs">Presencial ZS</option>
+                <option value="presencial_b">Presencial Barra</option>
+                <option value="presencial_zs">Presencial Botafogo</option>
                 <option value="online">Online</option>
               </select>
             </div>
