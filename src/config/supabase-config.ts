@@ -58,6 +58,12 @@ export interface Paciente {
   tem_representante: boolean;
   data_cadastro: string;
   created_at: string;
+  // Campos de histórico médico
+  hda?: string;
+  historia_patologica_pregressa?: string;
+  historia_familiar?: string;
+  hd?: string;
+  cd?: string;
 }
 
 export interface Consulta {

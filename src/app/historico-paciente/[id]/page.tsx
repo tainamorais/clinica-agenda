@@ -29,6 +29,11 @@ interface Paciente {
   tem_representante?: boolean;
   data_cadastro?: string;
   created_at?: string;
+  hda?: string;
+  historia_patologica_pregressa?: string;
+  historia_familiar?: string;
+  hd?: string;
+  cd?: string;
 }
 
 interface Consulta {
@@ -60,7 +65,7 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
   const [mensagem, setMensagem] = useState('');
   const [tipoMensagem, setTipoMensagem] = useState<'sucesso' | 'erro'>('sucesso');
   const [userRole, setUserRole] = useState<UserRole | null>(null);
-  const [tab, setTab] = useState<'dados' | 'remedios' | 'ficha'>('dados');
+  const [tab, setTab] = useState<'dados' | 'historico' | 'remedios' | 'consultas'>('dados');
   
   // Estados para edição dos dados adicionais
   const [editandoDados, setEditandoDados] = useState(false);
@@ -74,6 +79,17 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
     escolaridade: '',
     profissao: '',
     encaminhado_por: ''
+  });
+  
+  // Estados para edição do histórico
+  const [editandoHistorico, setEditandoHistorico] = useState(false);
+  const [salvandoHistorico, setSalvandoHistorico] = useState(false);
+  const [historicoEdit, setHistoricoEdit] = useState({
+    hda: '',
+    historia_patologica_pregressa: '',
+    historia_familiar: '',
+    hd: '',
+    cd: ''
   });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editMedicacoes, setEditMedicacoes] = useState('');
@@ -136,6 +152,11 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
               tem_representante: firstPatient.tem_representante,
               data_cadastro: firstPatient.data_cadastro,
               created_at: firstPatient.created_at,
+              hda: firstPatient.hda,
+              historia_patologica_pregressa: firstPatient.historia_patologica_pregressa,
+              historia_familiar: firstPatient.historia_familiar,
+              hd: firstPatient.hd,
+              cd: firstPatient.cd,
             });
           } else {
             // Se não achou via consultas, tenta buscar direto a tabela de pacientes
@@ -279,6 +300,19 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
     setEditandoDados(true);
   };
 
+  // Funções para edição do histórico
+  const iniciarEdicaoHistorico = () => {
+    if (!paciente) return;
+    setHistoricoEdit({
+      hda: paciente.hda || '',
+      historia_patologica_pregressa: paciente.historia_patologica_pregressa || '',
+      historia_familiar: paciente.historia_familiar || '',
+      hd: paciente.hd || '',
+      cd: paciente.cd || ''
+    });
+    setEditandoHistorico(true);
+  };
+
   const cancelarEdicaoDados = () => {
     setEditandoDados(false);
     setDadosEdit({
@@ -290,6 +324,17 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
       escolaridade: '',
       profissao: '',
       encaminhado_por: ''
+    });
+  };
+
+  const cancelarEdicaoHistorico = () => {
+    setEditandoHistorico(false);
+    setHistoricoEdit({
+      hda: '',
+      historia_patologica_pregressa: '',
+      historia_familiar: '',
+      hd: '',
+      cd: ''
     });
   };
 
@@ -346,6 +391,56 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
       setTimeout(() => setMensagem(''), 3000);
     } finally {
       setSalvandoDados(false);
+    }
+  };
+
+  const salvarHistorico = async () => {
+    if (!paciente) return;
+    setSalvandoHistorico(true);
+    try {
+      const historicoForSupabase = {
+        hda: historicoEdit.hda.trim() || null,
+        historia_patologica_pregressa: historicoEdit.historia_patologica_pregressa.trim() || null,
+        historia_familiar: historicoEdit.historia_familiar.trim() || null,
+        hd: historicoEdit.hd.trim() || null,
+        cd: historicoEdit.cd.trim() || null
+      };
+
+      const historicoForState = {
+        hda: historicoEdit.hda.trim() || undefined,
+        historia_patologica_pregressa: historicoEdit.historia_patologica_pregressa.trim() || undefined,
+        historia_familiar: historicoEdit.historia_familiar.trim() || undefined,
+        hd: historicoEdit.hd.trim() || undefined,
+        cd: historicoEdit.cd.trim() || undefined
+      };
+
+      if (isSupabaseConfigured) {
+        const { error } = await supabase
+          .from('pacientes')
+          .update(historicoForSupabase)
+          .eq('id', paciente.id);
+        if (error) throw error;
+      } else if (isLocalCacheEnabled) {
+        const pacientesLocal = JSON.parse(localStorage.getItem('pacientes') || '[]');
+        const atualizado = pacientesLocal.map((p: any) => 
+          p.id === paciente.id ? { ...p, ...historicoForState } : p
+        );
+        localStorage.setItem('pacientes', JSON.stringify(atualizado));
+      }
+      
+      // Atualiza o estado local
+      setPaciente(prev => prev ? { ...prev, ...historicoForState } : null);
+      setEditandoHistorico(false);
+      setMensagem('Histórico salvo com sucesso!');
+      setTipoMensagem('sucesso');
+      setTimeout(() => setMensagem(''), 3000);
+    } catch (e) {
+      console.error(e);
+      setMensagem('Erro ao salvar histórico.');
+      setTipoMensagem('erro');
+      setTimeout(() => setMensagem(''), 3000);
+    } finally {
+      setSalvandoHistorico(false);
     }
   };
 
@@ -412,12 +507,13 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
             {/* Abas */}
             <div className="bg-white rounded-lg shadow-md">
               <div className="border-b px-4 pt-3">
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <button onClick={() => setTab('dados')} className={`px-3 py-1.5 text-sm rounded-md ${tab==='dados' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}`}>Dados adicionais</button>
                   {userRole !== 'contador' && (
                     <>
+                      <button onClick={() => setTab('historico')} className={`px-3 py-1.5 text-sm rounded-md ${tab==='historico' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}`}>Histórico</button>
                       <button onClick={() => setTab('remedios')} className={`px-3 py-1.5 text-sm rounded-md ${tab==='remedios' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}`}>Remédios</button>
-                      <button onClick={() => setTab('ficha')} className={`px-3 py-1.5 text-sm rounded-md ${tab==='ficha' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}`}>Ficha</button>
+                      <button onClick={() => setTab('consultas')} className={`px-3 py-1.5 text-sm rounded-md ${tab==='consultas' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}`}>Consultas</button>
                     </>
                   )}
                 </div>
@@ -496,16 +592,6 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
                             <div>
                               <strong className="text-gray-700">Encaminhado por:</strong>
                               <p className="text-gray-900">{paciente.encaminhado_por}</p>
-                            </div>
-                          )}
-                          {paciente.modalidade_preferida && (
-                            <div>
-                              <strong className="text-gray-700">Modalidade Preferida:</strong>
-                              <p className="text-gray-900">
-                                {paciente.modalidade_preferida === 'presencial_b' ? 'Presencial Barra' :
-                                 paciente.modalidade_preferida === 'presencial_zs' ? 'Presencial Botafogo' :
-                                 paciente.modalidade_preferida === 'online' ? 'Online' : paciente.modalidade_preferida}
-                              </p>
                             </div>
                           )}
                         </div>
@@ -659,6 +745,137 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
                     )}
                   </div>
                 )}
+                {tab === 'historico' && (
+                  <div>
+                    {!editandoHistorico ? (
+                      <div>
+                        <div className="space-y-4 text-sm mb-4">
+                          {paciente.hda && (
+                            <div>
+                              <strong className="text-gray-700">HDA (História da Doença Atual):</strong>
+                              <p className="text-gray-900 whitespace-pre-line mt-1">{paciente.hda}</p>
+                            </div>
+                          )}
+                          {paciente.historia_patologica_pregressa && (
+                            <div>
+                              <strong className="text-gray-700">História Patológica Pregressa:</strong>
+                              <p className="text-gray-900 whitespace-pre-line mt-1">{paciente.historia_patologica_pregressa}</p>
+                            </div>
+                          )}
+                          {paciente.historia_familiar && (
+                            <div>
+                              <strong className="text-gray-700">História Familiar:</strong>
+                              <p className="text-gray-900 whitespace-pre-line mt-1">{paciente.historia_familiar}</p>
+                            </div>
+                          )}
+                          {paciente.hd && (
+                            <div>
+                              <strong className="text-gray-700">HD (Hipótese Diagnóstica):</strong>
+                              <p className="text-gray-900 whitespace-pre-line mt-1">{paciente.hd}</p>
+                            </div>
+                          )}
+                          {paciente.cd && (
+                            <div>
+                              <strong className="text-gray-700">CD (Conduta Diagnóstica):</strong>
+                              <p className="text-gray-900 whitespace-pre-line mt-1">{paciente.cd}</p>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Botão para editar ou mensagem se vazio */}
+                        {(!paciente.hda && !paciente.historia_patologica_pregressa && !paciente.historia_familiar && 
+                          !paciente.hd && !paciente.cd) ? (
+                          <div className="text-center text-gray-500 italic mb-4">
+                            Nenhum histórico cadastrado.
+                          </div>
+                        ) : null}
+                        
+                        <button 
+                          onClick={iniciarEdicaoHistorico}
+                          className="w-full px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-colors"
+                        >
+                          Editar Histórico
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <h3 className="font-medium text-gray-800 mb-3">Editando Histórico</h3>
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">HDA (História da Doença Atual)</label>
+                            <textarea 
+                              value={historicoEdit.hda} 
+                              onChange={(e) => setHistoricoEdit(prev => ({ ...prev, hda: e.target.value }))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                              rows={4}
+                              placeholder="Descreva a história da doença atual..." 
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">História Patológica Pregressa</label>
+                            <textarea 
+                              value={historicoEdit.historia_patologica_pregressa} 
+                              onChange={(e) => setHistoricoEdit(prev => ({ ...prev, historia_patologica_pregressa: e.target.value }))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                              rows={3}
+                              placeholder="Doenças anteriores, cirurgias, internações..." 
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">História Familiar</label>
+                            <textarea 
+                              value={historicoEdit.historia_familiar} 
+                              onChange={(e) => setHistoricoEdit(prev => ({ ...prev, historia_familiar: e.target.value }))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                              rows={3}
+                              placeholder="Histórico de doenças na família..." 
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">HD (Hipótese Diagnóstica)</label>
+                            <textarea 
+                              value={historicoEdit.hd} 
+                              onChange={(e) => setHistoricoEdit(prev => ({ ...prev, hd: e.target.value }))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                              rows={2}
+                              placeholder="Hipóteses diagnósticas..." 
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">CD (Conduta Diagnóstica)</label>
+                            <textarea 
+                              value={historicoEdit.cd} 
+                              onChange={(e) => setHistoricoEdit(prev => ({ ...prev, cd: e.target.value }))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                              rows={3}
+                              placeholder="Condutas e exames solicitados..." 
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="flex gap-3 pt-4">
+                          <button 
+                            onClick={salvarHistorico}
+                            disabled={salvandoHistorico}
+                            className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:bg-gray-400"
+                          >
+                            {salvandoHistorico ? 'Salvando...' : 'Salvar'}
+                          </button>
+                          <button 
+                            onClick={cancelarEdicaoHistorico}
+                            className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
                 {tab === 'remedios' && (
                   <div className="space-y-3">
                     {consultas.filter(c=> (c.medicacoes||'').trim()).length===0 ? (
@@ -682,7 +899,7 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
                     )}
                   </div>
                 )}
-                {tab === 'ficha' && (
+                {tab === 'consultas' && (
                   <div>
                     {consultas.length === 0 ? (
                       <p className="text-gray-500">Nenhuma consulta registrada.</p>
