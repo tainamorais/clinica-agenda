@@ -185,7 +185,7 @@ export default function ConsultasHoje() {
                 <div className="space-y-2 mb-4">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Valor:</span>
-                    <span className="font-medium">R$ {getValorConsulta(consulta.paciente).toFixed(2)}</span>
+                    <span className="font-semibold text-gray-800">R$ {getValorConsulta(consulta.paciente).toFixed(2)}</span>
                   </div>
 
                   <div className="flex justify-between text-sm">
