@@ -15,6 +15,20 @@ interface Paciente {
   data_nascimento?: string;
   valorConsulta?: number;
   valor_consulta?: number;
+  modalidade_preferida?: string;
+  naturalidade?: string;
+  sexo?: string;
+  estado_civil?: string;
+  religiao?: string;
+  raca?: string;
+  escolaridade?: string;
+  profissao?: string;
+  encaminhado_por?: string;
+  nome_representante?: string;
+  telefone_representante?: string;
+  tem_representante?: boolean;
+  data_cadastro?: string;
+  created_at?: string;
 }
 
 interface Consulta {
