@@ -521,7 +521,7 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
                   {userRole !== 'contador' && (
                     <>
                       <button onClick={() => setTab('historico')} className={`px-3 py-1.5 text-sm rounded-md ${tab==='historico' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}`}>Histórico</button>
-                      <button onClick={() => setTab('remedios')} className={`px-3 py-1.5 text-sm rounded-md ${tab==='remedios' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}`}>Remédios</button>
+                      <button onClick={() => setTab('remedios')} className={`px-3 py-1.5 text-sm rounded-md ${tab==='remedios' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}`}>Medicação</button>
                       <button onClick={() => setTab('consultas')} className={`px-3 py-1.5 text-sm rounded-md ${tab==='consultas' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}`}>Consultas</button>
                     </>
                   )}
@@ -931,7 +931,7 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
                                 <div className="mt-2 space-y-1 text-sm">
                                   {c.medicacoes && (
                                     <p className="text-gray-700">
-                                      <strong>Remédios:</strong> {c.medicacoes}
+                                      <strong>Medicação:</strong> {c.medicacoes}
                                       {prev && (c.medicacoes || '').trim() ? (
                                         <span className={`ml-2 ${mantida ? 'text-green-600' : 'text-yellow-700'}`}>{mantida ? '(mantida)' : '(alterada)'}</span>
                                       ) : null}
@@ -945,7 +945,7 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
                               {editingId === c.id ? (
                                 <div className="mt-3 space-y-2 bg-white border border-gray-200 p-3 rounded">
                                   <div>
-                                    <label className="block text-sm font-medium text-gray-800 mb-1">Remédios em uso (um por linha)</label>
+                                    <label className="block text-sm font-medium text-gray-800 mb-1">Medicação em uso (um por linha)</label>
                                     <textarea value={editMedicacoes} onChange={(e) => setEditMedicacoes(e.target.value)} rows={3} className="w-full px-3 py-2 border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white text-gray-900 placeholder-gray-500 text-base" placeholder="Ex.: Losartana 50mg 1x/dia\nMetformina 850mg 2x/dia" />
                                   </div>
                                   <div>

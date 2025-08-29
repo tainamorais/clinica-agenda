@@ -190,7 +190,7 @@ export default function EditarConsulta({ params }: { params: { id: string } }) {
               <input name="observacoes" value={formData.observacoes} onChange={(e) => setFormData(prev => ({ ...prev, observacoes: e.target.value }))} className={inputClass} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Remédios em uso (um por linha)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Medicação em uso (um por linha)</label>
               <textarea name="medicacoes" value={(formData as any).medicacoes} onChange={(e) => setFormData(prev => ({ ...prev, medicacoes: (e.target as HTMLTextAreaElement).value }))} rows={3} className={inputClass} placeholder="Ex.: Losartana 50mg 1x/dia\nMetformina 850mg 2x/dia" />
             </div>
             <div>
