@@ -297,7 +297,7 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
     if (!paciente) return;
     setSalvandoDados(true);
     try {
-      const dadosUpdate = {
+      const dadosForSupabase = {
         naturalidade: dadosEdit.naturalidade.trim() || null,
         sexo: dadosEdit.sexo || null,
         estado_civil: dadosEdit.estado_civil || null,
@@ -308,22 +308,33 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
         encaminhado_por: dadosEdit.encaminhado_por.trim() || null
       };
 
+      const dadosForState = {
+        naturalidade: dadosEdit.naturalidade.trim() || undefined,
+        sexo: dadosEdit.sexo || undefined,
+        estado_civil: dadosEdit.estado_civil || undefined,
+        religiao: dadosEdit.religiao.trim() || undefined,
+        raca: dadosEdit.raca || undefined,
+        escolaridade: dadosEdit.escolaridade || undefined,
+        profissao: dadosEdit.profissao.trim() || undefined,
+        encaminhado_por: dadosEdit.encaminhado_por.trim() || undefined
+      };
+
       if (isSupabaseConfigured) {
         const { error } = await supabase
           .from('pacientes')
-          .update(dadosUpdate)
+          .update(dadosForSupabase)
           .eq('id', paciente.id);
         if (error) throw error;
       } else if (isLocalCacheEnabled) {
         const pacientesLocal = JSON.parse(localStorage.getItem('pacientes') || '[]');
         const atualizado = pacientesLocal.map((p: any) => 
-          p.id === paciente.id ? { ...p, ...dadosUpdate } : p
+          p.id === paciente.id ? { ...p, ...dadosForState } : p
         );
         localStorage.setItem('pacientes', JSON.stringify(atualizado));
       }
       
       // Atualiza o estado local
-      setPaciente(prev => prev ? { ...prev, ...dadosUpdate } : null);
+      setPaciente(prev => prev ? { ...prev, ...dadosForState } : null);
       setEditandoDados(false);
       setMensagem('Dados adicionais salvos com sucesso!');
       setTipoMensagem('sucesso');
