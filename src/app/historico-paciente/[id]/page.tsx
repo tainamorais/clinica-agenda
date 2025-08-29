@@ -61,6 +61,20 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
   const [tipoMensagem, setTipoMensagem] = useState<'sucesso' | 'erro'>('sucesso');
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [tab, setTab] = useState<'dados' | 'remedios' | 'ficha'>('dados');
+  
+  // Estados para edição dos dados adicionais
+  const [editandoDados, setEditandoDados] = useState(false);
+  const [salvandoDados, setSalvandoDados] = useState(false);
+  const [dadosEdit, setDadosEdit] = useState({
+    naturalidade: '',
+    sexo: '',
+    estado_civil: '',
+    religiao: '',
+    raca: '',
+    escolaridade: '',
+    profissao: '',
+    encaminhado_por: ''
+  });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editMedicacoes, setEditMedicacoes] = useState('');
   const [editResumo, setEditResumo] = useState('');
@@ -249,6 +263,81 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
     }
   };
 
+  // Funções para edição dos dados adicionais
+  const iniciarEdicaoDados = () => {
+    if (!paciente) return;
+    setDadosEdit({
+      naturalidade: paciente.naturalidade || '',
+      sexo: paciente.sexo || '',
+      estado_civil: paciente.estado_civil || '',
+      religiao: paciente.religiao || '',
+      raca: paciente.raca || '',
+      escolaridade: paciente.escolaridade || '',
+      profissao: paciente.profissao || '',
+      encaminhado_por: paciente.encaminhado_por || ''
+    });
+    setEditandoDados(true);
+  };
+
+  const cancelarEdicaoDados = () => {
+    setEditandoDados(false);
+    setDadosEdit({
+      naturalidade: '',
+      sexo: '',
+      estado_civil: '',
+      religiao: '',
+      raca: '',
+      escolaridade: '',
+      profissao: '',
+      encaminhado_por: ''
+    });
+  };
+
+  const salvarDadosAdicionais = async () => {
+    if (!paciente) return;
+    setSalvandoDados(true);
+    try {
+      const dadosUpdate = {
+        naturalidade: dadosEdit.naturalidade.trim() || null,
+        sexo: dadosEdit.sexo || null,
+        estado_civil: dadosEdit.estado_civil || null,
+        religiao: dadosEdit.religiao.trim() || null,
+        raca: dadosEdit.raca || null,
+        escolaridade: dadosEdit.escolaridade || null,
+        profissao: dadosEdit.profissao.trim() || null,
+        encaminhado_por: dadosEdit.encaminhado_por.trim() || null
+      };
+
+      if (isSupabaseConfigured) {
+        const { error } = await supabase
+          .from('pacientes')
+          .update(dadosUpdate)
+          .eq('id', paciente.id);
+        if (error) throw error;
+      } else if (isLocalCacheEnabled) {
+        const pacientesLocal = JSON.parse(localStorage.getItem('pacientes') || '[]');
+        const atualizado = pacientesLocal.map((p: any) => 
+          p.id === paciente.id ? { ...p, ...dadosUpdate } : p
+        );
+        localStorage.setItem('pacientes', JSON.stringify(atualizado));
+      }
+      
+      // Atualiza o estado local
+      setPaciente(prev => prev ? { ...prev, ...dadosUpdate } : null);
+      setEditandoDados(false);
+      setMensagem('Dados adicionais salvos com sucesso!');
+      setTipoMensagem('sucesso');
+      setTimeout(() => setMensagem(''), 3000);
+    } catch (e) {
+      console.error(e);
+      setMensagem('Erro ao salvar dados adicionais.');
+      setTipoMensagem('erro');
+      setTimeout(() => setMensagem(''), 3000);
+    } finally {
+      setSalvandoDados(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="max-w-md mx-auto">
@@ -324,94 +413,237 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
               </div>
               <div className="p-6">
                 {tab === 'dados' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    {paciente.naturalidade && (
+                  <div>
+                    {!editandoDados ? (
                       <div>
-                        <strong className="text-gray-700">Naturalidade:</strong>
-                        <p className="text-gray-900">{paciente.naturalidade}</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
+                          {paciente.naturalidade && (
+                            <div>
+                              <strong className="text-gray-700">Naturalidade:</strong>
+                              <p className="text-gray-900">{paciente.naturalidade}</p>
+                            </div>
+                          )}
+                          {paciente.sexo && (
+                            <div>
+                              <strong className="text-gray-700">Sexo:</strong>
+                              <p className="text-gray-900">{paciente.sexo === 'masculino' ? 'Masculino' : paciente.sexo === 'feminino' ? 'Feminino' : 'Outro'}</p>
+                            </div>
+                          )}
+                          {paciente.estado_civil && (
+                            <div>
+                              <strong className="text-gray-700">Estado Civil:</strong>
+                              <p className="text-gray-900">
+                                {paciente.estado_civil === 'solteiro' ? 'Solteiro(a)' : 
+                                 paciente.estado_civil === 'casado' ? 'Casado(a)' :
+                                 paciente.estado_civil === 'divorciado' ? 'Divorciado(a)' :
+                                 paciente.estado_civil === 'viuvo' ? 'Viúvo(a)' :
+                                 paciente.estado_civil === 'uniao_estavel' ? 'União Estável' : paciente.estado_civil}
+                              </p>
+                            </div>
+                          )}
+                          {paciente.religiao && (
+                            <div>
+                              <strong className="text-gray-700">Religião:</strong>
+                              <p className="text-gray-900">{paciente.religiao}</p>
+                            </div>
+                          )}
+                          {paciente.raca && (
+                            <div>
+                              <strong className="text-gray-700">Raça/Cor:</strong>
+                              <p className="text-gray-900">
+                                {paciente.raca === 'branca' ? 'Branca' :
+                                 paciente.raca === 'preta' ? 'Preta' :
+                                 paciente.raca === 'parda' ? 'Parda' :
+                                 paciente.raca === 'amarela' ? 'Amarela' :
+                                 paciente.raca === 'indigena' ? 'Indígena' :
+                                 paciente.raca === 'outra' ? 'Outra' : paciente.raca}
+                              </p>
+                            </div>
+                          )}
+                          {paciente.escolaridade && (
+                            <div>
+                              <strong className="text-gray-700">Escolaridade:</strong>
+                              <p className="text-gray-900">
+                                {paciente.escolaridade === 'analfabeto' ? 'Analfabeto' :
+                                 paciente.escolaridade === 'fundamental_incompleto' ? 'Fundamental Incompleto' :
+                                 paciente.escolaridade === 'fundamental_completo' ? 'Fundamental Completo' :
+                                 paciente.escolaridade === 'medio_incompleto' ? 'Médio Incompleto' :
+                                 paciente.escolaridade === 'medio_completo' ? 'Médio Completo' :
+                                 paciente.escolaridade === 'superior_incompleto' ? 'Superior Incompleto' :
+                                 paciente.escolaridade === 'superior_completo' ? 'Superior Completo' :
+                                 paciente.escolaridade === 'pos_graduacao' ? 'Pós-graduação' : paciente.escolaridade}
+                              </p>
+                            </div>
+                          )}
+                          {paciente.profissao && (
+                            <div>
+                              <strong className="text-gray-700">Profissão:</strong>
+                              <p className="text-gray-900">{paciente.profissao}</p>
+                            </div>
+                          )}
+                          {paciente.encaminhado_por && (
+                            <div>
+                              <strong className="text-gray-700">Encaminhado por:</strong>
+                              <p className="text-gray-900">{paciente.encaminhado_por}</p>
+                            </div>
+                          )}
+                          {paciente.modalidade_preferida && (
+                            <div>
+                              <strong className="text-gray-700">Modalidade Preferida:</strong>
+                              <p className="text-gray-900">
+                                {paciente.modalidade_preferida === 'presencial_b' ? 'Presencial B' :
+                                 paciente.modalidade_preferida === 'presencial_zs' ? 'Presencial ZS' :
+                                 paciente.modalidade_preferida === 'online' ? 'Online' : paciente.modalidade_preferida}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Botão para editar ou mensagem se vazio */}
+                        {(!paciente.naturalidade && !paciente.sexo && !paciente.estado_civil && !paciente.religiao && 
+                          !paciente.raca && !paciente.escolaridade && !paciente.profissao && !paciente.encaminhado_por) ? (
+                          <div className="text-center text-gray-500 italic mb-4">
+                            Nenhum dado adicional cadastrado.
+                          </div>
+                        ) : null}
+                        
+                        <button 
+                          onClick={iniciarEdicaoDados}
+                          className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                        >
+                          Editar Dados Adicionais
+                        </button>
                       </div>
-                    )}
-                    {paciente.sexo && (
-                      <div>
-                        <strong className="text-gray-700">Sexo:</strong>
-                        <p className="text-gray-900">{paciente.sexo === 'masculino' ? 'Masculino' : paciente.sexo === 'feminino' ? 'Feminino' : 'Outro'}</p>
-                      </div>
-                    )}
-                    {paciente.estado_civil && (
-                      <div>
-                        <strong className="text-gray-700">Estado Civil:</strong>
-                        <p className="text-gray-900">
-                          {paciente.estado_civil === 'solteiro' ? 'Solteiro(a)' : 
-                           paciente.estado_civil === 'casado' ? 'Casado(a)' :
-                           paciente.estado_civil === 'divorciado' ? 'Divorciado(a)' :
-                           paciente.estado_civil === 'viuvo' ? 'Viúvo(a)' :
-                           paciente.estado_civil === 'uniao_estavel' ? 'União Estável' : paciente.estado_civil}
-                        </p>
-                      </div>
-                    )}
-                    {paciente.religiao && (
-                      <div>
-                        <strong className="text-gray-700">Religião:</strong>
-                        <p className="text-gray-900">{paciente.religiao}</p>
-                      </div>
-                    )}
-                    {paciente.raca && (
-                      <div>
-                        <strong className="text-gray-700">Raça/Cor:</strong>
-                        <p className="text-gray-900">
-                          {paciente.raca === 'branca' ? 'Branca' :
-                           paciente.raca === 'preta' ? 'Preta' :
-                           paciente.raca === 'parda' ? 'Parda' :
-                           paciente.raca === 'amarela' ? 'Amarela' :
-                           paciente.raca === 'indigena' ? 'Indígena' :
-                           paciente.raca === 'outra' ? 'Outra' : paciente.raca}
-                        </p>
-                      </div>
-                    )}
-                    {paciente.escolaridade && (
-                      <div>
-                        <strong className="text-gray-700">Escolaridade:</strong>
-                        <p className="text-gray-900">
-                          {paciente.escolaridade === 'analfabeto' ? 'Analfabeto' :
-                           paciente.escolaridade === 'fundamental_incompleto' ? 'Fundamental Incompleto' :
-                           paciente.escolaridade === 'fundamental_completo' ? 'Fundamental Completo' :
-                           paciente.escolaridade === 'medio_incompleto' ? 'Médio Incompleto' :
-                           paciente.escolaridade === 'medio_completo' ? 'Médio Completo' :
-                           paciente.escolaridade === 'superior_incompleto' ? 'Superior Incompleto' :
-                           paciente.escolaridade === 'superior_completo' ? 'Superior Completo' :
-                           paciente.escolaridade === 'pos_graduacao' ? 'Pós-graduação' : paciente.escolaridade}
-                        </p>
-                      </div>
-                    )}
-                    {paciente.profissao && (
-                      <div>
-                        <strong className="text-gray-700">Profissão:</strong>
-                        <p className="text-gray-900">{paciente.profissao}</p>
-                      </div>
-                    )}
-                    {paciente.encaminhado_por && (
-                      <div>
-                        <strong className="text-gray-700">Encaminhado por:</strong>
-                        <p className="text-gray-900">{paciente.encaminhado_por}</p>
-                      </div>
-                    )}
-                    {paciente.modalidade_preferida && (
-                      <div>
-                        <strong className="text-gray-700">Modalidade Preferida:</strong>
-                        <p className="text-gray-900">
-                          {paciente.modalidade_preferida === 'presencial_b' ? 'Presencial B' :
-                           paciente.modalidade_preferida === 'presencial_zs' ? 'Presencial ZS' :
-                           paciente.modalidade_preferida === 'online' ? 'Online' : paciente.modalidade_preferida}
-                        </p>
-                      </div>
-                    )}
-                    
-                    {/* Mensagem caso não tenha dados adicionais */}
-                    {!paciente.naturalidade && !paciente.sexo && !paciente.estado_civil && !paciente.religiao && 
-                     !paciente.raca && !paciente.escolaridade && !paciente.profissao && !paciente.encaminhado_por && (
-                      <div className="col-span-2 text-center text-gray-500 italic">
-                        Nenhum dado adicional cadastrado. <br />
-                        <span className="text-sm">Edite o paciente para adicionar informações.</span>
+                    ) : (
+                      <div className="space-y-4">
+                        <h3 className="font-medium text-gray-800 mb-3">Editando Dados Adicionais</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Naturalidade</label>
+                            <input 
+                              type="text" 
+                              value={dadosEdit.naturalidade} 
+                              onChange={(e) => setDadosEdit(prev => ({ ...prev, naturalidade: e.target.value }))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                              placeholder="Cidade, Estado" 
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Sexo</label>
+                            <select 
+                              value={dadosEdit.sexo} 
+                              onChange={(e) => setDadosEdit(prev => ({ ...prev, sexo: e.target.value }))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                            >
+                              <option value="">Selecionar</option>
+                              <option value="masculino">Masculino</option>
+                              <option value="feminino">Feminino</option>
+                              <option value="outro">Outro</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Estado Civil</label>
+                            <select 
+                              value={dadosEdit.estado_civil} 
+                              onChange={(e) => setDadosEdit(prev => ({ ...prev, estado_civil: e.target.value }))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                            >
+                              <option value="">Selecionar</option>
+                              <option value="solteiro">Solteiro(a)</option>
+                              <option value="casado">Casado(a)</option>
+                              <option value="divorciado">Divorciado(a)</option>
+                              <option value="viuvo">Viúvo(a)</option>
+                              <option value="uniao_estavel">União Estável</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Religião</label>
+                            <input 
+                              type="text" 
+                              value={dadosEdit.religiao} 
+                              onChange={(e) => setDadosEdit(prev => ({ ...prev, religiao: e.target.value }))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                              placeholder="Ex: Católica, Evangélica, etc." 
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Raça/Cor</label>
+                            <select 
+                              value={dadosEdit.raca} 
+                              onChange={(e) => setDadosEdit(prev => ({ ...prev, raca: e.target.value }))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                            >
+                              <option value="">Selecionar</option>
+                              <option value="branca">Branca</option>
+                              <option value="preta">Preta</option>
+                              <option value="parda">Parda</option>
+                              <option value="amarela">Amarela</option>
+                              <option value="indigena">Indígena</option>
+                              <option value="outra">Outra</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Escolaridade</label>
+                            <select 
+                              value={dadosEdit.escolaridade} 
+                              onChange={(e) => setDadosEdit(prev => ({ ...prev, escolaridade: e.target.value }))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                            >
+                              <option value="">Selecionar</option>
+                              <option value="analfabeto">Analfabeto</option>
+                              <option value="fundamental_incompleto">Fundamental Incompleto</option>
+                              <option value="fundamental_completo">Fundamental Completo</option>
+                              <option value="medio_incompleto">Médio Incompleto</option>
+                              <option value="medio_completo">Médio Completo</option>
+                              <option value="superior_incompleto">Superior Incompleto</option>
+                              <option value="superior_completo">Superior Completo</option>
+                              <option value="pos_graduacao">Pós-graduação</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Profissão</label>
+                            <input 
+                              type="text" 
+                              value={dadosEdit.profissao} 
+                              onChange={(e) => setDadosEdit(prev => ({ ...prev, profissao: e.target.value }))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                              placeholder="Ex: Professora, Engenheiro, etc." 
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Encaminhado por</label>
+                            <input 
+                              type="text" 
+                              value={dadosEdit.encaminhado_por} 
+                              onChange={(e) => setDadosEdit(prev => ({ ...prev, encaminhado_por: e.target.value }))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                              placeholder="Nome do profissional ou indicação" 
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="flex gap-3 pt-4">
+                          <button 
+                            onClick={salvarDadosAdicionais}
+                            disabled={salvandoDados}
+                            className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:bg-gray-400"
+                          >
+                            {salvandoDados ? 'Salvando...' : 'Salvar'}
+                          </button>
+                          <button 
+                            onClick={cancelarEdicaoDados}
+                            className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
+                          >
+                            Cancelar
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
