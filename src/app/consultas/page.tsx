@@ -200,7 +200,7 @@ export default function ConsultasPorData() {
       const cons = consultas.find(c => overlap(start, end, toMin(c.horario), toMin(c.horario) + (c.duration_minutos || 60)));
       if (cons) {
         status = 'agendado';
-        texto = cons.paciente ? getNomePreferencial(cons.paciente) : cons.paciente?.nome;
+        texto = cons.paciente ? getNomePreferencial(cons.paciente) : null;
         telefone = cons.paciente?.telefone || null;
         horarioConsulta = cons.horario;
       }
