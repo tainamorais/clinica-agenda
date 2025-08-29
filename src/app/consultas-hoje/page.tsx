@@ -60,7 +60,7 @@ const getModalidadeColor = (modalidade?: string) => {
   if (!modalidade) return 'bg-gray-100 text-gray-800';
   switch (modalidade) {
     case 'presencial_b': return 'bg-purple-100 text-purple-800'; // Roxo para Barra
-    case 'presencial_zs': return 'bg-pink-500 text-white'; // Rosa para Botafogo
+    case 'presencial_zs': return 'bg-pink-600 text-white'; // Rosa mais escuro para Botafogo
     case 'online': return 'bg-amber-700 text-white'; // Castanho para Online
     default: return 'bg-gray-100 text-gray-800';
   }
