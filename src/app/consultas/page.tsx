@@ -224,7 +224,7 @@ export default function ConsultasPorData() {
         texto = cons.paciente ? getNomePreferencial(cons.paciente) : null;
         telefone = cons.paciente?.telefone || null;
         horarioConsulta = cons.horario;
-        modalidade = (cons as any).modalidade || null;
+        modalidade = (cons as any).modalidade || cons.paciente?.modalidade_preferida || null;
       }
     }
     return { ...s, status, texto, telefone, horarioConsulta, modalidade };

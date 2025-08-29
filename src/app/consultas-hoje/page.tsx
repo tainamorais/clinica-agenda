@@ -79,7 +79,10 @@ export default function ConsultasHoje() {
       if (isSupabaseConfigured) {
         const { data, error } = await supabase
           .from('consultas')
-          .select('*, pacientes(*)')
+          .select(`
+            *,
+            pacientes(*)
+          `)
           .eq('data', dataHoje)
           .order('horario', { ascending: true });
         if (!error && data) {
@@ -208,9 +211,9 @@ export default function ConsultasHoje() {
                       <p className="text-xs text-gray-500 italic">Nome civil: {consulta.paciente.nome}</p>
                     )}
                     <p className="text-sm text-gray-600">{consulta.paciente.telefone}</p>
-                    {consulta.modalidade && (
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold mt-1 ${getModalidadeColor(consulta.modalidade)}`}>
-                        {getModalidadeLabel(consulta.modalidade)}
+                    {(consulta.modalidade || consulta.paciente.modalidade_preferida) && (
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold mt-1 ${getModalidadeColor(consulta.modalidade || consulta.paciente.modalidade_preferida)}`}>
+                        {getModalidadeLabel(consulta.modalidade || consulta.paciente.modalidade_preferida)}
                       </span>
                     )}
                   </div>
