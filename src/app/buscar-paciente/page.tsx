@@ -9,6 +9,7 @@ import { supabase, isSupabaseConfigured, isLocalCacheEnabled } from '../../confi
 interface Paciente {
   id: number;
   nome: string;
+  nome_social?: string;
   telefone: string;
   endereco: string;
   // datas podem vir em ambos formatos
