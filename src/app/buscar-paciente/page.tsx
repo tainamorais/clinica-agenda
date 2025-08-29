@@ -261,7 +261,7 @@ export default function BuscarPaciente() {
                   {getModalidadePreferida(paciente) && (
                     <p>
                       <strong>Modalidade:</strong>{' '}
-                      <span className={`text-xs font-bold ${getModalidadePreferida(paciente)==='online' ? 'text-purple-700' : getModalidadePreferida(paciente)==='presencial_zs' ? 'text-pink-600' : 'text-pink-400'}`}>
+                      <span className={`text-xs font-bold ${getModalidadePreferida(paciente)==='online' ? 'text-lime-600' : getModalidadePreferida(paciente)==='presencial_zs' ? 'text-pink-600' : 'text-purple-700'}`}>
                         {getModalidadePreferida(paciente)==='online' ? 'Online' : getModalidadePreferida(paciente)==='presencial_zs' ? 'Presencial Botafogo' : 'Presencial Barra'}
                       </span>
                     </p>

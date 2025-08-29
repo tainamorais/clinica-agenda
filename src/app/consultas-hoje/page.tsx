@@ -59,9 +59,9 @@ const getModalidadeLabel = (modalidade?: string) => {
 const getModalidadeColor = (modalidade?: string) => {
   if (!modalidade) return 'bg-gray-100 text-gray-800';
   switch (modalidade) {
-    case 'presencial_b': return 'bg-pink-100 text-pink-800';
+    case 'presencial_b': return 'bg-purple-100 text-purple-800';
     case 'presencial_zs': return 'bg-pink-500 text-white';
-    case 'online': return 'bg-purple-100 text-purple-800';
+    case 'online': return 'bg-lime-100 text-lime-800';
     default: return 'bg-gray-100 text-gray-800';
   }
 };
