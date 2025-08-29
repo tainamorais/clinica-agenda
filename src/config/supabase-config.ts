@@ -45,6 +45,14 @@ export interface Paciente {
   cpf: string;
   valor_consulta: number;
   modalidade_preferida?: 'presencial_b' | 'presencial_zs' | 'online';
+  naturalidade?: string;
+  sexo?: 'masculino' | 'feminino' | 'outro';
+  estado_civil?: 'solteiro' | 'casado' | 'divorciado' | 'viuvo' | 'uniao_estavel';
+  religiao?: string;
+  raca?: 'branca' | 'preta' | 'parda' | 'amarela' | 'indigena' | 'outra';
+  escolaridade?: 'analfabeto' | 'fundamental_incompleto' | 'fundamental_completo' | 'medio_incompleto' | 'medio_completo' | 'superior_incompleto' | 'superior_completo' | 'pos_graduacao';
+  profissao?: string;
+  encaminhado_por?: string;
   nome_representante: string;
   telefone_representante: string;
   tem_representante: boolean;
