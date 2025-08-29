@@ -11,6 +11,7 @@ export default function EditarPaciente({ params }: { params: { id: string } }) {
   const [tipoMensagem, setTipoMensagem] = useState<'sucesso' | 'erro'>('sucesso');
   const [formData, setFormData] = useState({
     nome: '',
+    nomeSocial: '',
     telefone: '',
     endereco: '',
     dataNascimento: '',
@@ -38,6 +39,7 @@ export default function EditarPaciente({ params }: { params: { id: string } }) {
         if (!error && data) {
           setFormData({
             nome: data.nome || '',
+            nomeSocial: data.nome_social || '',
             telefone: data.telefone || '',
             endereco: data.endereco || '',
             dataNascimento: data.data_nascimento || '',
@@ -57,6 +59,7 @@ export default function EditarPaciente({ params }: { params: { id: string } }) {
       if (p) {
         setFormData({
           nome: p.nome || '',
+          nomeSocial: p.nomeSocial || p.nome_social || '',
           telefone: p.telefone || '',
           endereco: p.endereco || '',
           dataNascimento: p.dataNascimento || p.data_nascimento || '',
@@ -99,6 +102,7 @@ export default function EditarPaciente({ params }: { params: { id: string } }) {
     try {
       const pacienteData = {
         nome: formData.nome.trim(),
+        nome_social: formData.nomeSocial.trim() || null,
         telefone: formData.telefone.trim(),
         endereco: formData.endereco.trim(),
         data_nascimento: formData.dataNascimento,
@@ -183,8 +187,13 @@ export default function EditarPaciente({ params }: { params: { id: string } }) {
         ) : (
           <form onSubmit={salvar} className="bg-white rounded-lg shadow-md p-6 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Nome *</label>
-              <input name="nome" value={formData.nome} onChange={handleInputChange} className={inputClass} required />
+              <label className="block text-sm font-medium text-gray-700 mb-2">Nome Completo *</label>
+              <input name="nome" value={formData.nome} onChange={handleInputChange} className={inputClass} required placeholder="Nome completo conforme RG/CPF" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Nome Social</label>
+              <input name="nomeSocial" value={formData.nomeSocial} onChange={handleInputChange} className={inputClass} placeholder="Nome social (opcional - como prefere ser chamado)" />
+              <p className="text-xs text-gray-500 mt-1">Conforme Lei nº 14.382/2022 que garante o direito ao nome social</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Telefone *</label>

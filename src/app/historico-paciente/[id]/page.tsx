@@ -8,6 +8,7 @@ import { formatISOToBR } from '../../../lib/date';
 interface Paciente {
   id: number;
   nome: string;
+  nome_social?: string;
   telefone: string;
   endereco: string;
   cpf: string;
@@ -56,6 +57,10 @@ const getValorConsulta = (p: Paciente) => {
 };
 
 const getDataNasc = (p: Paciente) => p.dataNascimento || (p as any).data_nascimento || '';
+
+const getNomePreferencial = (p: Paciente) => {
+  return p.nome_social?.trim() || p.nome;
+};
 
 export default function HistoricoPaciente({ params }: { params: { id: string } }) {
   const pacienteIdNum = Number(params.id);
@@ -139,6 +144,7 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
               data_nascimento: firstPatient.data_nascimento,
               valor_consulta: firstPatient.valor_consulta,
               modalidade_preferida: firstPatient.modalidade_preferida,
+              nome_social: firstPatient.nome_social,
               naturalidade: firstPatient.naturalidade,
               sexo: firstPatient.sexo,
               estado_civil: firstPatient.estado_civil,
@@ -468,7 +474,10 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
           <div className="space-y-4">
             {/* Bloco fixo de dados principais */}
             <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-lg font-semibold text-gray-800 mb-2">{paciente.nome}</h2>
+              <h2 className="text-lg font-semibold text-gray-800 mb-2">{getNomePreferencial(paciente)}</h2>
+              {paciente.nome_social && (
+                <p className="text-sm text-gray-500 italic mb-2">Nome civil: {paciente.nome}</p>
+              )}
               <p className="text-sm text-gray-600">Telefone: {paciente.telefone}</p>
               <p className="text-sm text-gray-600">CPF: {paciente.cpf}</p>
               <p className="text-sm text-gray-600">Endereço: {paciente.endereco}</p>
@@ -508,7 +517,7 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
             <div className="bg-white rounded-lg shadow-md">
               <div className="border-b px-4 pt-3">
                 <div className="flex gap-2 flex-wrap">
-                  <button onClick={() => setTab('dados')} className={`px-3 py-1.5 text-sm rounded-md ${tab==='dados' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}`}>Dados adicionais</button>
+                  <button onClick={() => setTab('dados')} className={`px-3 py-1.5 text-sm rounded-md ${tab==='dados' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}`}>Perfil</button>
                   {userRole !== 'contador' && (
                     <>
                       <button onClick={() => setTab('historico')} className={`px-3 py-1.5 text-sm rounded-md ${tab==='historico' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'}`}>Histórico</button>
@@ -600,7 +609,7 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
                         {(!paciente.naturalidade && !paciente.sexo && !paciente.estado_civil && !paciente.religiao && 
                           !paciente.raca && !paciente.escolaridade && !paciente.profissao && !paciente.encaminhado_por) ? (
                           <div className="text-center text-gray-500 italic mb-4">
-                            Nenhum dado adicional cadastrado.
+                            Nenhum dado do perfil cadastrado.
                           </div>
                         ) : null}
                         
@@ -608,12 +617,12 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
                           onClick={iniciarEdicaoDados}
                           className="w-full px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-colors"
                         >
-                          Editar Dados Adicionais
+                          Editar Perfil
                         </button>
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        <h3 className="font-medium text-gray-800 mb-3">Editando Dados Adicionais</h3>
+                        <h3 className="font-medium text-gray-800 mb-3">Editando Perfil</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Naturalidade</label>

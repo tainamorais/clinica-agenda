@@ -7,6 +7,7 @@ import { supabase, Paciente, isSupabaseConfigured, isLocalCacheEnabled } from '.
 export default function CadastrarPaciente() {
   const [formData, setFormData] = useState({
     nome: '',
+    nomeSocial: '',
     telefone: '',
     endereco: '',
     dataNascimento: '',
@@ -98,6 +99,7 @@ export default function CadastrarPaciente() {
 
     const pacienteData = {
       nome: formData.nome.trim(),
+      nome_social: formData.nomeSocial.trim() || null,
       telefone: formData.telefone.trim(),
       endereco: formData.endereco.trim(),
       data_nascimento: formData.dataNascimento,
@@ -156,6 +158,7 @@ export default function CadastrarPaciente() {
   const limparFormulario = () => {
     setFormData({
       nome: '',
+      nomeSocial: '',
       telefone: '',
       endereco: '',
       dataNascimento: '',
@@ -202,7 +205,13 @@ export default function CadastrarPaciente() {
         <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Nome Completo *</label>
-            <input type="text" name="nome" value={formData.nome} onChange={handleInputChange} required className={inputClass} placeholder="Nome completo do paciente" />
+            <input type="text" name="nome" value={formData.nome} onChange={handleInputChange} required className={inputClass} placeholder="Nome completo do paciente (conforme RG/CPF)" />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Nome Social</label>
+            <input type="text" name="nomeSocial" value={formData.nomeSocial} onChange={handleInputChange} className={inputClass} placeholder="Nome social (opcional - como prefere ser chamado)" />
+            <p className="text-xs text-gray-500 mt-1">Conforme Lei nº 14.382/2022 que garante o direito ao nome social</p>
           </div>
 
           <div>

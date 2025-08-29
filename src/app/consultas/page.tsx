@@ -8,6 +8,7 @@ import { formatISOToBR } from '../../lib/date';
 interface Paciente {
   id: number;
   nome: string;
+  nome_social?: string;
   telefone: string;
   endereco: string;
   dataNascimento?: string;
@@ -148,6 +149,10 @@ export default function ConsultasPorData() {
   const consultasOrdenadas = [...consultas].sort((a, b) => a.horario.localeCompare(b.horario));
   const formatarDataBR = (iso: string) => formatISOToBR(iso);
 
+  const getNomePreferencial = (paciente: Paciente) => {
+    return paciente.nome_social?.trim() || paciente.nome;
+  };
+
   // Grade (somente leitura)
   const [weekendOverride, setWeekendOverride] = useState<boolean>(false);
   useEffect(() => {
@@ -195,7 +200,7 @@ export default function ConsultasPorData() {
       const cons = consultas.find(c => overlap(start, end, toMin(c.horario), toMin(c.horario) + (c.duration_minutos || 60)));
       if (cons) {
         status = 'agendado';
-        texto = cons.paciente?.nome;
+        texto = cons.paciente ? getNomePreferencial(cons.paciente) : cons.paciente?.nome;
         telefone = cons.paciente?.telefone || null;
         horarioConsulta = cons.horario;
       }

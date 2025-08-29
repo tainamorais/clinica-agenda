@@ -48,12 +48,20 @@ export default function BuscarPaciente() {
   const getNomeRepresentante = (p: Paciente) => p.nomeRepresentante || (p as any).nome_representante || '';
   const getTelefoneRepresentante = (p: Paciente) => p.telefoneRepresentante || (p as any).telefone_representante || '';
 
+  // Função para obter o nome preferencial (nome social tem prioridade)
+  const getNomePreferencial = (paciente: any) => {
+    return paciente.nome_social?.trim() || paciente.nome;
+  };
+
   // Monta link do WhatsApp a partir do telefone
-  const buildWhatsUrl = (phone: string, name?: string) => {
+  const buildWhatsUrl = (phone: string, paciente?: any) => {
     const digits = (phone || '').replace(/\D/g, '');
     if (!digits) return '#';
     const withCountry = digits.startsWith('55') ? digits : `55${digits}`;
-    const firstName = (name || '').trim().split(' ')[0] || '';
+    
+    // Se paciente for passado, usa nome preferencial; senão usa string name (compatibilidade)
+    const nomePreferencial = paciente ? getNomePreferencial(paciente) : (phone || '');
+    const firstName = nomePreferencial.trim().split(' ')[0] || '';
     const text = encodeURIComponent(firstName ? `Olá, ${firstName}!` : 'Olá!');
     return `https://wa.me/${withCountry}?text=${text}`;
   };
@@ -216,13 +224,16 @@ export default function BuscarPaciente() {
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex-1">
                     <h3 className="font-semibold text-gray-800 text-lg">
-                      {paciente.nome}
+                      {getNomePreferencial(paciente)}
                     </h3>
+                    {paciente.nome_social && (
+                      <p className="text-xs text-gray-500 italic">Nome civil: {paciente.nome}</p>
+                    )}
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <span>{paciente.telefone}</span>
                       {paciente.telefone && (
                         <a
-                          href={buildWhatsUrl(paciente.telefone, paciente.nome)}
+                          href={buildWhatsUrl(paciente.telefone, paciente)}
                           target="_blank"
                           rel="noopener noreferrer"
                           aria-label="Enviar WhatsApp"
@@ -265,7 +276,7 @@ export default function BuscarPaciente() {
                         </p>
                         {getTelefoneRepresentante(paciente) && (
                           <a
-                            href={buildWhatsUrl(getTelefoneRepresentante(paciente), getNomeRepresentante(paciente))}
+                            href={buildWhatsUrl(getTelefoneRepresentante(paciente), { nome: getNomeRepresentante(paciente) })}
                             target="_blank"
                             rel="noopener noreferrer"
                             aria-label="WhatsApp do representante"

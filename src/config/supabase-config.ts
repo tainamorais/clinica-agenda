@@ -39,6 +39,7 @@ export const isLocalCacheEnabled = (process.env.NEXT_PUBLIC_LOCAL_CACHE || '').t
 export interface Paciente {
   id: number;
   nome: string;
+  nome_social?: string;
   telefone: string;
   endereco: string;
   data_nascimento: string;
