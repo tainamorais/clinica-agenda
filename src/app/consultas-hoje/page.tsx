@@ -8,6 +8,7 @@ import { formatISOToBR } from '../../lib/date';
 interface Paciente {
   id: number;
   nome: string;
+  nome_social?: string;
   telefone: string;
   endereco: string;
   dataNascimento?: string;
@@ -15,6 +16,7 @@ interface Paciente {
   cpf: string;
   valorConsulta?: number;
   valor_consulta?: number;
+  modalidade_preferida?: string;
   nomeRepresentante?: string;
   telefoneRepresentante?: string;
   temRepresentante?: boolean;
@@ -32,11 +34,36 @@ interface Consulta {
   jaPagou: boolean;
   observacoes: string;
   dataAgendamento: string;
+  modalidade?: string;
 }
 
 const getValorConsulta = (p: Paciente) => {
   const bruto = (p as any)?.valor_consulta ?? (p as any)?.valorConsulta ?? 0;
   return Number(bruto) || 0;
+};
+
+const getNomePreferencial = (p: Paciente) => {
+  return p.nome_social?.trim() || p.nome;
+};
+
+const getModalidadeLabel = (modalidade?: string) => {
+  if (!modalidade) return '';
+  switch (modalidade) {
+    case 'presencial_b': return 'Presencial Barra';
+    case 'presencial_zs': return 'Presencial Botafogo';
+    case 'online': return 'Online';
+    default: return modalidade;
+  }
+};
+
+const getModalidadeColor = (modalidade?: string) => {
+  if (!modalidade) return 'bg-gray-100 text-gray-800';
+  switch (modalidade) {
+    case 'presencial_b': return 'bg-pink-100 text-pink-800';
+    case 'presencial_zs': return 'bg-pink-500 text-white';
+    case 'online': return 'bg-purple-100 text-purple-800';
+    default: return 'bg-gray-100 text-gray-800';
+  }
 };
 
 export default function ConsultasHoje() {
@@ -62,11 +89,13 @@ export default function ConsultasHoje() {
             paciente: {
               id: row.pacientes?.id,
               nome: row.pacientes?.nome,
+              nome_social: row.pacientes?.nome_social,
               telefone: row.pacientes?.telefone,
               endereco: row.pacientes?.endereco,
               cpf: row.pacientes?.cpf,
               data_nascimento: row.pacientes?.data_nascimento,
               valor_consulta: row.pacientes?.valor_consulta,
+              modalidade_preferida: row.pacientes?.modalidade_preferida,
             },
             data: row.data,
             horario: row.horario,
@@ -74,6 +103,7 @@ export default function ConsultasHoje() {
             jaPagou: row.ja_pagou,
             observacoes: row.observacoes || '',
             dataAgendamento: row.data_agendamento,
+            modalidade: row.modalidade,
           }));
           setConsultas(mapeadas);
           return;
@@ -173,8 +203,16 @@ export default function ConsultasHoje() {
               <div key={consulta.id} className="bg-white rounded-lg shadow-md p-6">
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex-1">
-                    <h3 className="font-semibold text-gray-800 text-lg">{consulta.paciente.nome}</h3>
+                    <h3 className="font-semibold text-gray-800 text-lg">{getNomePreferencial(consulta.paciente)}</h3>
+                    {consulta.paciente.nome_social && (
+                      <p className="text-xs text-gray-500 italic">Nome civil: {consulta.paciente.nome}</p>
+                    )}
                     <p className="text-sm text-gray-600">{consulta.paciente.telefone}</p>
+                    {consulta.modalidade && (
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold mt-1 ${getModalidadeColor(consulta.modalidade)}`}>
+                        {getModalidadeLabel(consulta.modalidade)}
+                      </span>
+                    )}
                   </div>
                   <div className="text-right">
                     <span className="text-lg font-bold text-blue-600">{consulta.horario}</span>

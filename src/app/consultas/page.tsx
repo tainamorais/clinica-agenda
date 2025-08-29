@@ -153,6 +153,26 @@ export default function ConsultasPorData() {
     return paciente.nome_social?.trim() || paciente.nome;
   };
 
+  const getModalidadeLabel = (modalidade?: string) => {
+    if (!modalidade) return '';
+    switch (modalidade) {
+      case 'presencial_b': return 'Presencial Barra';
+      case 'presencial_zs': return 'Presencial Botafogo';
+      case 'online': return 'Online';
+      default: return modalidade;
+    }
+  };
+
+  const getModalidadeColor = (modalidade?: string) => {
+    if (!modalidade) return 'bg-gray-100 text-gray-800';
+    switch (modalidade) {
+      case 'presencial_b': return 'bg-pink-100 text-pink-800';
+      case 'presencial_zs': return 'bg-pink-500 text-white';
+      case 'online': return 'bg-purple-100 text-purple-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   // Grade (somente leitura)
   const [weekendOverride, setWeekendOverride] = useState<boolean>(false);
   useEffect(() => {
@@ -189,6 +209,7 @@ export default function ConsultasPorData() {
     let texto: string | null = null;
     let telefone: string | null = null;
     let horarioConsulta: string | null = null;
+    let modalidade: string | null = null;
     if (diaBloqueado) { status = 'bloqueado'; }
     // bloqueio por faixa
     if (status === 'livre') {
@@ -203,9 +224,10 @@ export default function ConsultasPorData() {
         texto = cons.paciente ? getNomePreferencial(cons.paciente) : null;
         telefone = cons.paciente?.telefone || null;
         horarioConsulta = cons.horario;
+        modalidade = (cons as any).modalidade || null;
       }
     }
-    return { ...s, status, texto, telefone, horarioConsulta };
+    return { ...s, status, texto, telefone, horarioConsulta, modalidade };
   });
 
   // Cálculo extra: slots de 30min livres criados por consultas de 30min
@@ -450,6 +472,11 @@ export default function ConsultasPorData() {
                       <span className="flex-1">
                         {s.texto && (<span className="block text-blue-700 font-medium break-words leading-snug">{s.texto}</span>)}
                         {s.horarioConsulta && (<span className="block text-xs text-gray-600">{s.horarioConsulta}</span>)}
+                        {s.modalidade && (
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold mt-1 ${getModalidadeColor(s.modalidade)}`}>
+                            {getModalidadeLabel(s.modalidade)}
+                          </span>
+                        )}
                       </span>
                       {s.telefone && (
                         <a
