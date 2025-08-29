@@ -94,6 +94,20 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
               cpf: firstPatient.cpf,
               data_nascimento: firstPatient.data_nascimento,
               valor_consulta: firstPatient.valor_consulta,
+              modalidade_preferida: firstPatient.modalidade_preferida,
+              naturalidade: firstPatient.naturalidade,
+              sexo: firstPatient.sexo,
+              estado_civil: firstPatient.estado_civil,
+              religiao: firstPatient.religiao,
+              raca: firstPatient.raca,
+              escolaridade: firstPatient.escolaridade,
+              profissao: firstPatient.profissao,
+              encaminhado_por: firstPatient.encaminhado_por,
+              nome_representante: firstPatient.nome_representante,
+              telefone_representante: firstPatient.telefone_representante,
+              tem_representante: firstPatient.tem_representante,
+              data_cadastro: firstPatient.data_cadastro,
+              created_at: firstPatient.created_at,
             });
           } else {
             // Se não achou via consultas, tenta buscar direto a tabela de pacientes
@@ -296,8 +310,96 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
               </div>
               <div className="p-6">
                 {tab === 'dados' && (
-                  <div className="text-sm text-gray-700">
-                    <p>Área reservada para dados adicionais do paciente (em breve).</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    {paciente.naturalidade && (
+                      <div>
+                        <strong className="text-gray-700">Naturalidade:</strong>
+                        <p className="text-gray-900">{paciente.naturalidade}</p>
+                      </div>
+                    )}
+                    {paciente.sexo && (
+                      <div>
+                        <strong className="text-gray-700">Sexo:</strong>
+                        <p className="text-gray-900">{paciente.sexo === 'masculino' ? 'Masculino' : paciente.sexo === 'feminino' ? 'Feminino' : 'Outro'}</p>
+                      </div>
+                    )}
+                    {paciente.estado_civil && (
+                      <div>
+                        <strong className="text-gray-700">Estado Civil:</strong>
+                        <p className="text-gray-900">
+                          {paciente.estado_civil === 'solteiro' ? 'Solteiro(a)' : 
+                           paciente.estado_civil === 'casado' ? 'Casado(a)' :
+                           paciente.estado_civil === 'divorciado' ? 'Divorciado(a)' :
+                           paciente.estado_civil === 'viuvo' ? 'Viúvo(a)' :
+                           paciente.estado_civil === 'uniao_estavel' ? 'União Estável' : paciente.estado_civil}
+                        </p>
+                      </div>
+                    )}
+                    {paciente.religiao && (
+                      <div>
+                        <strong className="text-gray-700">Religião:</strong>
+                        <p className="text-gray-900">{paciente.religiao}</p>
+                      </div>
+                    )}
+                    {paciente.raca && (
+                      <div>
+                        <strong className="text-gray-700">Raça/Cor:</strong>
+                        <p className="text-gray-900">
+                          {paciente.raca === 'branca' ? 'Branca' :
+                           paciente.raca === 'preta' ? 'Preta' :
+                           paciente.raca === 'parda' ? 'Parda' :
+                           paciente.raca === 'amarela' ? 'Amarela' :
+                           paciente.raca === 'indigena' ? 'Indígena' :
+                           paciente.raca === 'outra' ? 'Outra' : paciente.raca}
+                        </p>
+                      </div>
+                    )}
+                    {paciente.escolaridade && (
+                      <div>
+                        <strong className="text-gray-700">Escolaridade:</strong>
+                        <p className="text-gray-900">
+                          {paciente.escolaridade === 'analfabeto' ? 'Analfabeto' :
+                           paciente.escolaridade === 'fundamental_incompleto' ? 'Fundamental Incompleto' :
+                           paciente.escolaridade === 'fundamental_completo' ? 'Fundamental Completo' :
+                           paciente.escolaridade === 'medio_incompleto' ? 'Médio Incompleto' :
+                           paciente.escolaridade === 'medio_completo' ? 'Médio Completo' :
+                           paciente.escolaridade === 'superior_incompleto' ? 'Superior Incompleto' :
+                           paciente.escolaridade === 'superior_completo' ? 'Superior Completo' :
+                           paciente.escolaridade === 'pos_graduacao' ? 'Pós-graduação' : paciente.escolaridade}
+                        </p>
+                      </div>
+                    )}
+                    {paciente.profissao && (
+                      <div>
+                        <strong className="text-gray-700">Profissão:</strong>
+                        <p className="text-gray-900">{paciente.profissao}</p>
+                      </div>
+                    )}
+                    {paciente.encaminhado_por && (
+                      <div>
+                        <strong className="text-gray-700">Encaminhado por:</strong>
+                        <p className="text-gray-900">{paciente.encaminhado_por}</p>
+                      </div>
+                    )}
+                    {paciente.modalidade_preferida && (
+                      <div>
+                        <strong className="text-gray-700">Modalidade Preferida:</strong>
+                        <p className="text-gray-900">
+                          {paciente.modalidade_preferida === 'presencial_b' ? 'Presencial B' :
+                           paciente.modalidade_preferida === 'presencial_zs' ? 'Presencial ZS' :
+                           paciente.modalidade_preferida === 'online' ? 'Online' : paciente.modalidade_preferida}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {/* Mensagem caso não tenha dados adicionais */}
+                    {!paciente.naturalidade && !paciente.sexo && !paciente.estado_civil && !paciente.religiao && 
+                     !paciente.raca && !paciente.escolaridade && !paciente.profissao && !paciente.encaminhado_por && (
+                      <div className="col-span-2 text-center text-gray-500 italic">
+                        Nenhum dado adicional cadastrado. <br />
+                        <span className="text-sm">Edite o paciente para adicionar informações.</span>
+                      </div>
+                    )}
                   </div>
                 )}
                 {tab === 'remedios' && (
