@@ -32,6 +32,7 @@ interface Consulta {
   dataAgendamento: string;
   medicacoes?: string;
   resumo?: string;
+  modalidade?: string;
 }
 
 function AgendarConsultaInner() {
@@ -231,6 +232,7 @@ function AgendarConsultaInner() {
         ja_pagou: consulta.jaPagou,
         observacoes: consulta.observacoes,
         duration_minutos: durationMinutos,
+        modalidade: consulta.modalidade,
       };
       const { data, error } = await supabase.from('consultas').insert([payload]).select().single();
       if (error) throw error;
