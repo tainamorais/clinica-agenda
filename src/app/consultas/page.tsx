@@ -168,7 +168,7 @@ export default function ConsultasPorData() {
     if (!modalidade) return 'bg-gray-100 text-gray-800';
     switch (modalidade) {
       case 'presencial_b': return 'bg-purple-100 text-purple-800';
-      case 'presencial_zs': return 'bg-pink-500 text-white';
+      case 'presencial_zs': return 'bg-pink-600 text-white';
       case 'online': return 'bg-amber-700 text-white';
       default: return 'bg-gray-100 text-gray-800';
     }
