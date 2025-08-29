@@ -16,6 +16,7 @@ interface Paciente {
   cpf: string;
   valorConsulta?: number;
   valor_consulta?: number;
+  modalidade_preferida?: string;
 }
 
 interface Consulta {
