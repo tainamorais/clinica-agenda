@@ -13,14 +13,6 @@ export default function CadastrarPaciente() {
     cpf: '',
     valorConsulta: '',
     modalidadePreferida: 'presencial_b',
-    naturalidade: '',
-    sexo: '',
-    estadoCivil: '',
-    religiao: '',
-    raca: '',
-    escolaridade: '',
-    profissao: '',
-    encaminhadoPor: '',
     nomeRepresentante: '',
     telefoneRepresentante: '',
     temRepresentante: false
@@ -112,14 +104,6 @@ export default function CadastrarPaciente() {
       cpf: formData.cpf.trim(),
       valor_consulta: parseFloat(formData.valorConsulta),
       modalidade_preferida: formData.modalidadePreferida as any,
-      naturalidade: formData.naturalidade.trim() || null,
-      sexo: formData.sexo || null,
-      estado_civil: formData.estadoCivil || null,
-      religiao: formData.religiao.trim() || null,
-      raca: formData.raca || null,
-      escolaridade: formData.escolaridade || null,
-      profissao: formData.profissao.trim() || null,
-      encaminhado_por: formData.encaminhadoPor.trim() || null,
       nome_representante: formData.nomeRepresentante.trim(),
       telefone_representante: formData.telefoneRepresentante.trim(),
       tem_representante: formData.temRepresentante
@@ -169,11 +153,6 @@ export default function CadastrarPaciente() {
     }
   };
 
-  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
   const limparFormulario = () => {
     setFormData({
       nome: '',
@@ -183,14 +162,6 @@ export default function CadastrarPaciente() {
       cpf: '',
       valorConsulta: '',
       modalidadePreferida: 'presencial_b',
-      naturalidade: '',
-      sexo: '',
-      estadoCivil: '',
-      religiao: '',
-      raca: '',
-      escolaridade: '',
-      profissao: '',
-      encaminhadoPor: '',
       nomeRepresentante: '',
       telefoneRepresentante: '',
       temRepresentante: false
@@ -271,83 +242,6 @@ export default function CadastrarPaciente() {
               <option value="presencial_zs">Presencial ZS</option>
               <option value="online">Online</option>
             </select>
-          </div>
-
-          {/* Dados Adicionais */}
-          <div className="border-t pt-4">
-            <h3 className="text-lg font-medium text-gray-800 mb-4">Dados Adicionais</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Naturalidade</label>
-                <input type="text" name="naturalidade" value={formData.naturalidade} onChange={handleInputChange} className={inputClass} placeholder="Cidade, Estado" />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Sexo</label>
-                <select name="sexo" value={formData.sexo} onChange={handleSelectChange} className={selectClass}>
-                  <option value="">Selecionar</option>
-                  <option value="masculino">Masculino</option>
-                  <option value="feminino">Feminino</option>
-                  <option value="outro">Outro</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Estado Civil</label>
-                <select name="estadoCivil" value={formData.estadoCivil} onChange={handleSelectChange} className={selectClass}>
-                  <option value="">Selecionar</option>
-                  <option value="solteiro">Solteiro(a)</option>
-                  <option value="casado">Casado(a)</option>
-                  <option value="divorciado">Divorciado(a)</option>
-                  <option value="viuvo">Viúvo(a)</option>
-                  <option value="uniao_estavel">União Estável</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Religião</label>
-                <input type="text" name="religiao" value={formData.religiao} onChange={handleInputChange} className={inputClass} placeholder="Ex: Católica, Evangélica, etc." />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Raça/Cor</label>
-                <select name="raca" value={formData.raca} onChange={handleSelectChange} className={selectClass}>
-                  <option value="">Selecionar</option>
-                  <option value="branca">Branca</option>
-                  <option value="preta">Preta</option>
-                  <option value="parda">Parda</option>
-                  <option value="amarela">Amarela</option>
-                  <option value="indigena">Indígena</option>
-                  <option value="outra">Outra</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Escolaridade</label>
-                <select name="escolaridade" value={formData.escolaridade} onChange={handleSelectChange} className={selectClass}>
-                  <option value="">Selecionar</option>
-                  <option value="analfabeto">Analfabeto</option>
-                  <option value="fundamental_incompleto">Fundamental Incompleto</option>
-                  <option value="fundamental_completo">Fundamental Completo</option>
-                  <option value="medio_incompleto">Médio Incompleto</option>
-                  <option value="medio_completo">Médio Completo</option>
-                  <option value="superior_incompleto">Superior Incompleto</option>
-                  <option value="superior_completo">Superior Completo</option>
-                  <option value="pos_graduacao">Pós-graduação</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Profissão</label>
-                <input type="text" name="profissao" value={formData.profissao} onChange={handleInputChange} className={inputClass} placeholder="Ex: Professora, Engenheiro, etc." />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Encaminhado por</label>
-                <input type="text" name="encaminhadoPor" value={formData.encaminhadoPor} onChange={handleInputChange} className={inputClass} placeholder="Nome do profissional ou indicação" />
-              </div>
-            </div>
           </div>
 
           <div className="border-t pt-4">
