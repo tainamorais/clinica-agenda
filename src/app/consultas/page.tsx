@@ -165,12 +165,12 @@ export default function ConsultasPorData() {
   };
 
   const getModalidadeColor = (modalidade?: string) => {
-    if (!modalidade) return 'bg-gray-100 text-gray-800';
+    if (!modalidade) return 'text-gray-800';
     switch (modalidade) {
-      case 'presencial_b': return 'bg-purple-100 text-purple-800';
-      case 'presencial_zs': return 'bg-pink-600 text-white';
-      case 'online': return 'bg-amber-700 text-white';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'presencial_b': return 'text-purple-700 font-bold';
+      case 'presencial_zs': return 'text-pink-700 font-bold';
+      case 'online': return 'text-amber-700 font-bold';
+      default: return 'text-gray-800';
     }
   };
 

@@ -57,12 +57,12 @@ const getModalidadeLabel = (modalidade?: string) => {
 };
 
 const getModalidadeColor = (modalidade?: string) => {
-  if (!modalidade) return 'bg-gray-100 text-gray-800';
+  if (!modalidade) return 'text-gray-800';
   switch (modalidade) {
-    case 'presencial_b': return 'bg-purple-100 text-purple-800'; // Roxo para Barra
-    case 'presencial_zs': return 'bg-pink-600 text-white'; // Rosa mais escuro para Botafogo
-    case 'online': return 'bg-amber-700 text-white'; // Castanho para Online
-    default: return 'bg-gray-100 text-gray-800';
+    case 'presencial_b': return 'text-purple-700 font-bold'; // Roxo para Barra
+    case 'presencial_zs': return 'text-pink-700 font-bold'; // Rosa para Botafogo
+    case 'online': return 'text-amber-700 font-bold'; // Castanho para Online
+    default: return 'text-gray-800';
   }
 };
 
@@ -212,9 +212,9 @@ export default function ConsultasHoje() {
                     )}
                     <p className="text-sm text-gray-600">{consulta.paciente.telefone}</p>
                     {(consulta.modalidade || consulta.paciente.modalidade_preferida) && (
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold mt-1 ${getModalidadeColor(consulta.modalidade || consulta.paciente.modalidade_preferida)}`}>
+                      <p className={`text-xs mt-1 ${getModalidadeColor(consulta.modalidade || consulta.paciente.modalidade_preferida)}`}>
                         {getModalidadeLabel(consulta.modalidade || consulta.paciente.modalidade_preferida)}
-                      </span>
+                      </p>
                     )}
                   </div>
                   <div className="text-right">
