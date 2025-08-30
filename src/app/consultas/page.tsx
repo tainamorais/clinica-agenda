@@ -30,11 +30,16 @@ interface Consulta {
   observacoes: string;
   dataAgendamento: string;
   duration_minutos?: number;
+  modalidade?: string;
 }
 
 const getValorConsulta = (p: Paciente) => {
   const bruto = (p as any)?.valor_consulta ?? (p as any)?.valorConsulta ?? 0;
   return Number(bruto) || 0;
+};
+
+const getNomePreferencial = (p: Paciente) => {
+  return p.nome_social?.trim() || p.nome;
 };
 
 export default function ConsultasPorData() {
@@ -63,11 +68,13 @@ export default function ConsultasPorData() {
             paciente: {
               id: row.pacientes?.id,
               nome: row.pacientes?.nome,
+              nome_social: row.pacientes?.nome_social,
               telefone: row.pacientes?.telefone,
               endereco: row.pacientes?.endereco,
               cpf: row.pacientes?.cpf,
               data_nascimento: row.pacientes?.data_nascimento,
               valor_consulta: row.pacientes?.valor_consulta,
+              modalidade_preferida: row.pacientes?.modalidade_preferida,
             },
             data: row.data,
             horario: row.horario,
@@ -76,6 +83,7 @@ export default function ConsultasPorData() {
             observacoes: row.observacoes || '',
             dataAgendamento: row.data_agendamento,
             duration_minutos: row.duration_minutos ?? 60,
+            modalidade: row.modalidade,
           }));
           setConsultas(mapeadas);
           // Bloqueios do dia
@@ -544,8 +552,16 @@ export default function ConsultasPorData() {
               <div key={consulta.id} className="bg-white rounded-lg shadow-md p-6">
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex-1">
-                    <h3 className="font-semibold text-gray-800 text-lg">{consulta.paciente.nome}</h3>
+                    <h3 className="font-semibold text-gray-800 text-lg">{getNomePreferencial(consulta.paciente)}</h3>
+                    {consulta.paciente.nome_social && (
+                      <p className="text-xs text-gray-500 italic">Nome civil: {consulta.paciente.nome}</p>
+                    )}
                     <p className="text-sm text-gray-600">{consulta.paciente.telefone}</p>
+                    {(consulta.modalidade || consulta.paciente.modalidade_preferida) && (
+                      <p className={`text-xs mt-1 ${getModalidadeColor(consulta.modalidade || consulta.paciente.modalidade_preferida)}`}>
+                        {getModalidadeLabel(consulta.modalidade || consulta.paciente.modalidade_preferida)}
+                      </p>
+                    )}
                   </div>
                   <div className="text-right">
                     <span className="text-lg font-bold text-blue-600">{consulta.horario}</span>
