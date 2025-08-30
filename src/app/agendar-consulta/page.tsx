@@ -285,6 +285,7 @@ function AgendarConsultaInner() {
       tipoConsulta: formData.tipoConsulta,
       jaPagou: formData.jaPagou,
       observacoes: formData.observacoes.trim(),
+      modalidade: formData.modalidade,
     };
 
     try {

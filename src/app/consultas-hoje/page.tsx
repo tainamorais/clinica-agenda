@@ -211,20 +211,11 @@ export default function ConsultasHoje() {
                       <p className="text-xs text-gray-500 italic">Nome civil: {consulta.paciente.nome}</p>
                     )}
                     <p className="text-sm text-gray-600">{consulta.paciente.telefone}</p>
-                    {(() => {
-                      const modalidadeAtual = consulta.modalidade || consulta.paciente.modalidade_preferida;
-                      console.log('🐛 DEBUG - Paciente:', consulta.paciente.nome);
-                      console.log('🐛 DEBUG - consulta.modalidade:', consulta.modalidade);
-                      console.log('🐛 DEBUG - paciente.modalidade_preferida:', consulta.paciente.modalidade_preferida);
-                      console.log('🐛 DEBUG - modalidadeAtual:', modalidadeAtual);
-                      console.log('🐛 DEBUG - getModalidadeColor resultado:', getModalidadeColor(modalidadeAtual));
-                      console.log('🐛 DEBUG - getModalidadeLabel resultado:', getModalidadeLabel(modalidadeAtual));
-                      return modalidadeAtual && (
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold mt-1 ${getModalidadeColor(modalidadeAtual)}`}>
-                          {getModalidadeLabel(modalidadeAtual)}
-                        </span>
-                      );
-                    })()}
+                    {(consulta.modalidade || consulta.paciente.modalidade_preferida) && (
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold mt-1 ${getModalidadeColor(consulta.modalidade || consulta.paciente.modalidade_preferida)}`}>
+                        {getModalidadeLabel(consulta.modalidade || consulta.paciente.modalidade_preferida)}
+                      </span>
+                    )}
                   </div>
                   <div className="text-right">
                     <span className="text-lg font-bold text-blue-600">{consulta.horario}</span>
