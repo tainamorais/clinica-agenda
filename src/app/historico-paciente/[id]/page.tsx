@@ -971,7 +971,9 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
                           <div className="text-center text-gray-500 italic mb-4">
                             Nenhum histórico cadastrado.
                           </div>
-                        ) : null}
+                        ) : (
+                          <div className="mt-6"></div>
+                        )}
                         
                         <button 
                           onClick={iniciarEdicaoHistorico}
