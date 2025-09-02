@@ -35,6 +35,7 @@ interface Paciente {
   historia_familiar?: string;
   hd?: string;
   cd?: string;
+  link_prontuario_anterior?: string;
 }
 
 interface Consulta {
@@ -100,6 +101,11 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
   const [editMedicacoes, setEditMedicacoes] = useState('');
   const [editResumo, setEditResumo] = useState('');
   const [savingInline, setSavingInline] = useState(false);
+  
+  // Estados para edição do link do prontuário
+  const [editandoLinkProntuario, setEditandoLinkProntuario] = useState(false);
+  const [linkProntuarioEdit, setLinkProntuarioEdit] = useState('');
+  const [salvandoLinkProntuario, setSalvandoLinkProntuario] = useState(false);
 
   useEffect(() => {
     carregar();
@@ -163,6 +169,7 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
               historia_familiar: firstPatient.historia_familiar,
               hd: firstPatient.hd,
               cd: firstPatient.cd,
+              link_prontuario_anterior: firstPatient.link_prontuario_anterior,
             });
           } else {
             // Se não achou via consultas, tenta buscar direto a tabela de pacientes
@@ -319,6 +326,12 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
     setEditandoHistorico(true);
   };
 
+  const iniciarEdicaoLinkProntuario = () => {
+    if (!paciente) return;
+    setLinkProntuarioEdit(paciente.link_prontuario_anterior || '');
+    setEditandoLinkProntuario(true);
+  };
+
   const cancelarEdicaoDados = () => {
     setEditandoDados(false);
     setDadosEdit({
@@ -447,6 +460,79 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
       setTimeout(() => setMensagem(''), 3000);
     } finally {
       setSalvandoHistorico(false);
+    }
+  };
+
+  const salvarLinkProntuario = async () => {
+    if (!paciente) return;
+    setSalvandoLinkProntuario(true);
+    try {
+      const linkForSupabase = linkProntuarioEdit.trim() || null;
+      const linkForState = linkProntuarioEdit.trim() || undefined;
+
+      if (isSupabaseConfigured) {
+        const { error } = await supabase
+          .from('pacientes')
+          .update({ link_prontuario_anterior: linkForSupabase })
+          .eq('id', paciente.id);
+        if (error) throw error;
+      } else if (isLocalCacheEnabled) {
+        const pacientesLocal = JSON.parse(localStorage.getItem('pacientes') || '[]');
+        const atualizado = pacientesLocal.map((p: any) => 
+          p.id === paciente.id ? { ...p, link_prontuario_anterior: linkForState } : p
+        );
+        localStorage.setItem('pacientes', JSON.stringify(atualizado));
+      }
+      
+      // Atualiza o estado local
+      setPaciente(prev => prev ? { ...prev, link_prontuario_anterior: linkForState } : null);
+      setEditandoLinkProntuario(false);
+      setLinkProntuarioEdit('');
+      setMensagem('Link do prontuário salvo com sucesso!');
+      setTipoMensagem('sucesso');
+      setTimeout(() => setMensagem(''), 3000);
+    } catch (e) {
+      console.error(e);
+      setMensagem('Erro ao salvar link do prontuário.');
+      setTipoMensagem('erro');
+      setTimeout(() => setMensagem(''), 3000);
+    } finally {
+      setSalvandoLinkProntuario(false);
+    }
+  };
+
+  const removerLinkProntuario = async () => {
+    if (!paciente) return;
+    setSalvandoLinkProntuario(true);
+    try {
+      if (isSupabaseConfigured) {
+        const { error } = await supabase
+          .from('pacientes')
+          .update({ link_prontuario_anterior: null })
+          .eq('id', paciente.id);
+        if (error) throw error;
+      } else if (isLocalCacheEnabled) {
+        const pacientesLocal = JSON.parse(localStorage.getItem('pacientes') || '[]');
+        const atualizado = pacientesLocal.map((p: any) => 
+          p.id === paciente.id ? { ...p, link_prontuario_anterior: undefined } : p
+        );
+        localStorage.setItem('pacientes', JSON.stringify(atualizado));
+      }
+      
+      // Atualiza o estado local
+      setPaciente(prev => prev ? { ...prev, link_prontuario_anterior: undefined } : null);
+      setEditandoLinkProntuario(false);
+      setLinkProntuarioEdit('');
+      setMensagem('Link do prontuário removido com sucesso!');
+      setTipoMensagem('sucesso');
+      setTimeout(() => setMensagem(''), 3000);
+    } catch (e) {
+      console.error(e);
+      setMensagem('Erro ao remover link do prontuário.');
+      setTipoMensagem('erro');
+      setTimeout(() => setMensagem(''), 3000);
+    } finally {
+      setSalvandoLinkProntuario(false);
     }
   };
 
@@ -790,6 +876,94 @@ export default function HistoricoPaciente({ params }: { params: { id: string } }
                             </div>
                           )}
                         </div>
+                        
+                        {/* Link do Prontuário Anterior */}
+                        <div className="border-t pt-4 mt-6">
+                          <h4 className="font-medium text-gray-800 mb-3 flex items-center">
+                            📎 Prontuário Anterior
+                          </h4>
+                          {paciente.link_prontuario_anterior ? (
+                            <div className="flex items-center justify-between bg-gray-50 p-3 rounded-md">
+                              <div className="flex items-center">
+                                <span className="text-sm text-gray-600 mr-2">Link disponível:</span>
+                                <a 
+                                  href={paciente.link_prontuario_anterior}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:text-blue-800 underline text-sm"
+                                >
+                                  Ver Prontuário Anterior
+                                </a>
+                              </div>
+                              <button
+                                onClick={iniciarEdicaoLinkProntuario}
+                                className="text-xs text-gray-500 hover:text-gray-700 underline"
+                              >
+                                Editar
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="text-center">
+                              <p className="text-gray-500 text-sm mb-3">Nenhum link do prontuário anterior cadastrado.</p>
+                              <button
+                                onClick={iniciarEdicaoLinkProntuario}
+                                className="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
+                              >
+                                Adicionar Link do Prontuário
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Interface de edição do link do prontuário */}
+                        {editandoLinkProntuario && (
+                          <div className="border-t pt-4 mt-6">
+                            <h4 className="font-medium text-gray-800 mb-3">Editar Link do Prontuário</h4>
+                            <div className="space-y-3">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  URL do Prontuário Anterior
+                                </label>
+                                <input
+                                  type="url"
+                                  value={linkProntuarioEdit}
+                                  onChange={(e) => setLinkProntuarioEdit(e.target.value)}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                                  placeholder="https://drive.google.com/file/d/..."
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Cole aqui o link do Google Drive ou outro serviço de armazenamento
+                                </p>
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={salvarLinkProntuario}
+                                  disabled={salvandoLinkProntuario}
+                                  className="px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors disabled:opacity-50"
+                                >
+                                  {salvandoLinkProntuario ? 'Salvando...' : 'Salvar'}
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setEditandoLinkProntuario(false);
+                                    setLinkProntuarioEdit('');
+                                  }}
+                                  className="px-4 py-2 bg-gray-500 text-white text-sm rounded-md hover:bg-gray-600 transition-colors"
+                                >
+                                  Cancelar
+                                </button>
+                                {paciente.link_prontuario_anterior && (
+                                  <button
+                                    onClick={removerLinkProntuario}
+                                    className="px-4 py-2 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 transition-colors"
+                                  >
+                                    Remover Link
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
                         
                         {/* Botão para editar ou mensagem se vazio */}
                         {(!paciente.hda && !paciente.historia_patologica_pregressa && !paciente.historia_familiar && 
